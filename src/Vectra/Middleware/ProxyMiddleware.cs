@@ -1,4 +1,5 @@
 ﻿using Vectra.Core.DTOs;
+using Vectra.Core.Entities;
 using Vectra.Core.Interfaces;
 using Vectra.Core.UseCases;
 using Yarp.ReverseProxy.Forwarder;
@@ -13,6 +14,7 @@ public class ProxyMiddleware
     private readonly EvaluateRequestUseCase _evaluateUseCase;
     private readonly IHitlService _hitlService;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IAgentRepository _agentRepository;
 
     public ProxyMiddleware(
         RequestDelegate next,
@@ -20,7 +22,8 @@ public class ProxyMiddleware
         ILogger<ProxyMiddleware> logger,
         EvaluateRequestUseCase evaluateUseCase,
         IHitlService hitlService,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        IAgentRepository agentRepository)
     {
         _next = next;
         _forwarder = forwarder;
@@ -28,32 +31,46 @@ public class ProxyMiddleware
         _evaluateUseCase = evaluateUseCase;
         _hitlService = hitlService;
         _httpClientFactory = httpClientFactory;
+        _agentRepository = agentRepository;
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // 1. Extract JWT and build RequestContext
-        var agentId = GetAgentIdFromToken(context);
-        if (agentId == null)
+        // 1. Get agent ID from JWT (attached by JwtMiddleware)
+        if (!context.Items.TryGetValue("AgentId", out var agentIdObj) || agentIdObj is not Guid agentId)
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsync("Missing or invalid token");
+            await context.Response.WriteAsync("Missing or invalid authentication");
             return;
         }
 
+        // 2. Fetch agent data (including trust score)
+        var agent = await _agentRepository.GetByIdAsync(agentId);
+        if (agent == null || agent.Status != AgentStatus.Active)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsync("Agent is not active");
+            return;
+        }
+
+        // 3. Build RequestContext (without reading body yet – we'll read if needed)
         var requestContext = new RequestContext
         {
             Method = context.Request.Method,
             Path = context.Request.Path + context.Request.QueryString,
-            Headers = context.Request.Headers.ToDictionary(
-                h => h.Key,
-                h => h.Value.ToString()
-            ),
-            AgentId = agentId.Value,
-            TrustScore = 0.5, // retrieve from DB or cache
+            Headers = context.Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()),
+            AgentId = agentId,
+            TrustScore = agent.TrustScore,
         };
 
-        // 2. Evaluate policy
+        // 4. Evaluate policy (may need body)
+        // To avoid reading body unnecessarily, we only read it if the decision engine requires it.
+        // For simplicity, we'll read it now and store.
+        // But we need to ensure we can read the body multiple times (for forwarding).
+        // So enable buffering.
+        context.Request.EnableBuffering();
+        requestContext.Body = await ReadBodyAsync(context.Request);
+
         var decision = await _evaluateUseCase.ExecuteAsync(requestContext);
 
         if (decision.IsDenied)
@@ -72,36 +89,36 @@ public class ProxyMiddleware
             return;
         }
 
-        // 3. Allowed – forward using YARP
-        // We need to determine the destination (could be based on host header or config)
-        // For simplicity, we'll forward to a default upstream from config.
-        var destination = context.Request.Host.Value; // or lookup based on original host
-        // Here we could inject real API keys from Vault into headers.
-        // For example: context.Request.Headers["X-API-Key"] = "real-key";
+        // 5. Allowed – forward using YARP
+        // Determine destination URI from the original request's host header.
+        // The host header should be the target API's host (e.g., api.github.com).
+        var targetHost = context.Request.Host.Host;
+        var targetScheme = context.Request.Scheme; // use same scheme as incoming request
+        var destinationUri = $"{targetScheme}://{targetHost}";
 
-        var forwarderRequest = context.Request;
-        var forwarderResponse = context.Response;
-        var forwarderContext = new ForwarderRequestContext
-        {
-            Activity = context.Items["Activity"] as System.Diagnostics.Activity,
-            HttpContext = context
-        };
-        await _forwarder.SendAsync(forwarderContext, destination, _httpClientFactory.CreateClient());
+        // If the agent uses a custom header to specify the target, you could use that instead.
+        // For example: var destination = context.Request.Headers["X-Target-Url"].FirstOrDefault();
+
+        // Create an HttpClient for forwarding (use a shared client, but careful with DNS).
+        // We can get a named client from the factory.
+        var httpClient = _httpClientFactory.CreateClient("ProxyForwarder");
+
+        // Reset the request body position to beginning for forwarding
+        context.Request.Body.Position = 0;
+
+        // Forward the request
+        await _forwarder.SendAsync(context, destinationUri, httpClient);
     }
 
-    private Guid? GetAgentIdFromToken(HttpContext context)
+    private async Task<string?> ReadBodyAsync(HttpRequest request)
     {
-        var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-        if (string.IsNullOrEmpty(token)) return null;
+        if (request.ContentLength == null || request.ContentLength == 0)
+            return null;
 
-        // We'll use a token validation service (ITokenService) – but we need to inject it.
-        // For simplicity, we'll assume we have a service. In real code, inject ITokenService.
-        // var principal = _tokenService.ValidateToken(token);
-        // if (principal == null) return null;
-        // var idString = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        // return Guid.TryParse(idString, out var id) ? id : null;
-
-        // Placeholder:
-        return Guid.NewGuid(); // replace with actual validation
+        request.Body.Position = 0;
+        using var reader = new StreamReader(request.Body, leaveOpen: true);
+        var body = await reader.ReadToEndAsync();
+        request.Body.Position = 0;
+        return body;
     }
 }
