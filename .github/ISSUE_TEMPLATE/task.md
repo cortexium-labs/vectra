@@ -2,7 +2,7 @@
 name: Task
 about: Track a discrete unit of work such as refactors, chores, or follow-ups
 title: ''
-labels: task
+labels: type:chore, type:refactor
 assignees: ''
 ---
 
