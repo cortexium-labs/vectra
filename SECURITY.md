@@ -1,0 +1,31 @@
+# Vectra Security Policy
+
+At **Vectra**, security is a top priority. We are committed to safeguarding our users, 
+their data, and the systems that rely on our software. Rigorous security practices are 
+integrated throughout our software development and release lifecycle to ensure the highest level of protection.
+
+## Reporting a Vulnerability
+
+If you identify a potential security issue or vulnerability in Vectra, please **report it privately** to our security team:
+
+📧 **[contact@vectra.cortexiumlabs.com](mailto:contact@vectra.cortexiumlabs.com)**
+
+> **Important:** Please **do not** create a public issue or pull request, as this may expose the vulnerability before it is resolved.
+
+## Response Process
+
+We handle every report with urgency and transparency:
+
+1. **Acknowledgment**  
+   We will confirm receipt of your report within **3 business days**.
+
+2. **Investigation**  
+   Our security team will thoroughly investigate the issue and develop a fix or mitigation.
+
+3. **Resolution Timeline**  
+   Confirmed vulnerabilities are typically resolved and released in a patch within **30 days** of reporting.
+
+4. **Coordinated Disclosure**  
+   Once a fix is ready, we will coordinate public disclosure with the reporter and include a detailed changelog in the relevant release notes.
+
+We sincerely appreciate your responsible disclosure and your efforts in helping **keep Vectra safe for everyone**.
