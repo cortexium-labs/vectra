@@ -21,7 +21,7 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, JwtTokenService>();
 
         // OPA client
-        services.AddHttpClient<IOpaClient, OpaClient>(client =>
+        services.AddHttpClient<IPolicyEngine, PolicyEngine>(client =>
         {
             client.BaseAddress = new Uri(configuration["Opa:Endpoint"] ?? "http://localhost:8181");
         });
@@ -33,8 +33,15 @@ public static class DependencyInjection
         services.AddScoped<ISemanticEngine, SemanticEngineStub>();
 
         // HITL (Redis)
-        services.AddSingleton<IConnectionMultiplexer>(sp =>
-            ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+        {
+            var redis = configuration.GetConnectionString("Redis");
+            if (string.IsNullOrWhiteSpace(redis))
+                throw new InvalidOperationException("Missing Redis connection string: ConnectionStrings:Redis");
+
+            return ConnectionMultiplexer.Connect(redis);
+        });
+
         services.AddScoped<IHitlService, RedisHitlService>();
 
         // Decision engine

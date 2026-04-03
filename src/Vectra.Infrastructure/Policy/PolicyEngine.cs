@@ -3,11 +3,11 @@ using Vectra.Core.Interfaces;
 
 namespace Vectra.Infrastructure.Policy;
 
-public class OpaClient : IOpaClient
+public class PolicyEngine : IPolicyEngine
 {
     private readonly HttpClient _httpClient;
 
-    public OpaClient(HttpClient httpClient)
+    public PolicyEngine(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }

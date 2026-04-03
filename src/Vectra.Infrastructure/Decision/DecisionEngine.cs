@@ -6,13 +6,13 @@ namespace Vectra.Infrastructure.Decision;
 
 public class DecisionEngine : IDecisionEngine
 {
-    private readonly IOpaClient _opaClient;
+    private readonly IPolicyEngine _policyEngine;
     private readonly IRiskScoringService _riskScoring;
     private readonly ISemanticEngine _semanticEngine;
 
-    public DecisionEngine(IOpaClient opaClient, IRiskScoringService riskScoring, ISemanticEngine semanticEngine)
+    public DecisionEngine(IPolicyEngine policyEngine, IRiskScoringService riskScoring, ISemanticEngine semanticEngine)
     {
-        _opaClient = opaClient;
+        _policyEngine = policyEngine;
         _riskScoring = riskScoring;
         _semanticEngine = semanticEngine;
     }
@@ -26,7 +26,7 @@ public class DecisionEngine : IDecisionEngine
             path = context.Path,
             agent = new { trust_score = context.TrustScore }
         };
-        var opaDecision = await _opaClient.EvaluateAsync("vectra/authz", opaInput, cancellationToken);
+        var opaDecision = await _policyEngine.EvaluateAsync("vectra/authz", opaInput, cancellationToken);
         if (opaDecision.Decision == "deny")
             return DecisionResult.Deny("OPA policy denied");
         if (opaDecision.Decision == "hitl")
