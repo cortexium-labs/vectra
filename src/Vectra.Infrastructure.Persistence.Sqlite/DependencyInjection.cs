@@ -4,6 +4,7 @@ using Vectra.Core.Interfaces;
 using Vectra.Infrastructure.Persistence.Abstractions;
 using Vectra.Infrastructure.Persistence.Sqlite.Contexts;
 using Vectra.Infrastructure.Persistence.Sqlite.Repositories;
+using Vectra.Infrastructure.Persistence.Sqlite.Services;
 
 namespace Vectra.Infrastructure.Persistence.Sqlite;
 
@@ -16,6 +17,7 @@ public static class DependencyInjection
             .AddScoped<IAgentRepository, AgentRepository>()
             .AddScoped<IPolicyRepository, PolicyRepository>()
             .AddScoped<IAuditRepository, AuditRepository>()
+            .AddScoped<IDatabaseInitializer, SqliteDatabaseInitializer>()
             .AddPooledDbContextFactory<SqliteApplicationContext>(options =>
             {
                 options.UseSqlite(databaseConnection.ConnectionString);
