@@ -1,4 +1,3 @@
-using Asp.Versioning;
 using Microsoft.AspNetCore.DataProtection;
 using Vectra.Extensions;
 using Vectra.Infrastructure;
@@ -11,8 +10,7 @@ try
     ConfigureServices(builder, args);
 
     var app = builder.Build();
-    ConfigureMiddleware(app);
-    await ConfigureFlowSynxApplication(app);
+    await ConfigureWebApplication(app);
 
     await app.RunAsync();
 }
@@ -33,23 +31,11 @@ static void ConfigureServices(WebApplicationBuilder builder, string[] args)
     services
         .AddInfrastructure(builder.Configuration)
         .AddFlowSynxPersistence()
-        .AddOpenApi()
+        .AddVectraApiDocumentation()
         .AddVectraServer()
         .AddVectraProxyForwarder()
         .AddVectraHealthChecker()
         .AddVectraVersion();
-
-    services
-        .AddReverseProxy()
-        .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
-
-    services.AddApiVersioning(options =>
-    {
-        options.DefaultApiVersion = new ApiVersion(1, 0);
-        options.AssumeDefaultVersionWhenUnspecified = true;
-        options.ApiVersionReader = new UrlSegmentApiVersionReader();
-        options.ReportApiVersions = true;
-    });
 
     if (!env.IsDevelopment())
         builder.Services.ParseVectraArguments(args);
@@ -57,7 +43,7 @@ static void ConfigureServices(WebApplicationBuilder builder, string[] args)
     builder.ConfigureVectraHttpServer();
 }
 
-static void ConfigureMiddleware(WebApplication app)
+static async Task ConfigureWebApplication(WebApplication app)
 {
     if (app.Environment.IsDevelopment())
     {
@@ -72,18 +58,25 @@ static void ConfigureMiddleware(WebApplication app)
     app.UseVectraCustomHeaders();
 
     app.UseRouting();
+    app.UseMiddleware<JwtMiddleware>();
+
+    app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/proxy"), proxyBranch =>
+    {
+        proxyBranch.UseMiddleware<ProxyMiddleware>();
+    });
+
+    app.MapEndpoints();
+
+    app.Map("/{**catch-all}", async ctx =>
+    {
+        ctx.Response.StatusCode = 404;
+        await ctx.Response.WriteAsync($"No endpoint found for {ctx.Request.Path}");
+    });
 
     app.UseVectraApiDocumentation();
     app.UseVectraHealthCheck();
 
-    app.UseMiddleware<ProxyMiddleware>();
-    app.MapReverseProxy();
-}
-
-static async Task ConfigureFlowSynxApplication(WebApplication app)
-{
     await app.EnsureApplicationDatabaseCreated();
-    app.MapEndpoints();
 }
 
 static async Task HandleStartupExceptionAsync(WebApplicationBuilder builder, Exception ex)
