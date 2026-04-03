@@ -1,4 +1,5 @@
-﻿using Vectra.Core.DTOs;
+﻿using System.Text.RegularExpressions;
+using Vectra.Core.DTOs;
 using Vectra.Core.Entities;
 using Vectra.Core.Interfaces;
 using Vectra.Core.UseCases;
@@ -27,51 +28,68 @@ public class ProxyMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Resolve scoped services per-request.
+        // 1. Extract raw target URL from the path
+        var fullPath = context.Request.Path.ToString();
+        if (!fullPath.StartsWith("/proxy/"))
+        {
+            context.Response.StatusCode = 400;
+            await context.Response.WriteAsync("Invalid proxy path. Expected /proxy/<full-url>");
+            return;
+        }
+
+        var targetUrlString = fullPath.Substring("/proxy/".Length);
+        if (!Uri.TryCreate(targetUrlString, UriKind.Absolute, out var targetUri))
+        {
+            context.Response.StatusCode = 400;
+            await context.Response.WriteAsync("Invalid target URL in proxy path");
+            return;
+        }
+
+        // 2. Store the destination base URI
+        var destinationBaseUri = $"{targetUri.Scheme}://{targetUri.Authority}";
+
+        // 3. Override request path and query for YARP
+        context.Request.Path = targetUri.AbsolutePath;
+        context.Request.QueryString = new QueryString(targetUri.Query);
+
+        // 4. Resolve services
         var evaluateUseCase = context.RequestServices.GetRequiredService<EvaluateRequestUseCase>();
         var hitlService = context.RequestServices.GetRequiredService<IHitlService>();
         var agentRepository = context.RequestServices.GetRequiredService<IAgentRepository>();
 
-        // 1. Get agent ID from JWT (attached by JwtMiddleware)
+        // 5. Authentication
         if (!context.Items.TryGetValue("AgentId", out var agentIdObj) || agentIdObj is not Guid agentId)
         {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.StatusCode = 401;
             await context.Response.WriteAsync("Missing or invalid authentication");
             return;
         }
 
-        // 2. Fetch agent data (including trust score)
         var agent = await agentRepository.GetByIdAsync(agentId);
         if (agent == null || agent.Status != AgentStatus.Active)
         {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.StatusCode = 403;
             await context.Response.WriteAsync("Agent is not active");
             return;
         }
 
-        // 3. Build RequestContext (without reading body yet – we'll read if needed)
+        // 6. Build RequestContext for policy evaluation (read body)
+        context.Request.EnableBuffering();
         var requestContext = new RequestContext
         {
             Method = context.Request.Method,
-            Path = context.Request.Path + context.Request.QueryString,
+            Path = targetUri.PathAndQuery,
             Headers = context.Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()),
             AgentId = agentId,
             TrustScore = agent.TrustScore,
+            Body = await ReadBodyAsync(context.Request)
         };
-
-        // 4. Evaluate policy (may need body)
-        // To avoid reading body unnecessarily, we only read it if the decision engine requires it.
-        // For simplicity, we'll read it now and store.
-        // But we need to ensure we can read the body multiple times (for forwarding).
-        // So enable buffering.
-        context.Request.EnableBuffering();
-        requestContext.Body = await ReadBodyAsync(context.Request);
 
         var decision = await evaluateUseCase.ExecuteAsync(requestContext);
 
         if (decision.IsDenied)
         {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.StatusCode = 403;
             await context.Response.WriteAsync(decision.Reason ?? "Access denied");
             return;
         }
@@ -79,31 +97,52 @@ public class ProxyMiddleware
         if (decision.IsHitl)
         {
             var hitlId = await hitlService.SuspendRequestAsync(requestContext, decision.Reason ?? "HITL required");
-            context.Response.StatusCode = StatusCodes.Status202Accepted;
+            context.Response.StatusCode = 202;
             context.Response.Headers.Location = $"/hitl/status/{hitlId}";
             await context.Response.WriteAsync($"Request pending approval. Poll {context.Response.Headers.Location}");
             return;
         }
 
-        // 5. Allowed – forward using YARP
-        // Determine destination URI from the original request's host header.
-        // The host header should be the target API's host (e.g., api.github.com).
-        var targetHost = context.Request.Host.Host;
-        var targetScheme = context.Request.Scheme; // use same scheme as incoming request
-        var destinationUri = $"{targetScheme}://{targetHost}";
-
-        // If the agent uses a custom header to specify the target, you could use that instead.
-        // For example: var destination = context.Request.Headers["X-Target-Url"].FirstOrDefault();
-
-        // Create an HttpClient for forwarding (use a shared client, but careful with DNS).
-        // We can get a named client from the factory.
-        var httpClient = _httpClientFactory.CreateClient("ProxyForwarder");
-
-        // Reset the request body position to beginning for forwarding
+        // 7. Forward the request with CORRECT headers
         context.Request.Body.Position = 0;
 
-        // Forward the request
-        await _forwarder.SendAsync(context, destinationUri, httpClient);
+        // Create a new HttpRequestMessage for manual forwarding (or use YARP with transforms)
+        var httpClient = _httpClientFactory.CreateClient();
+        var proxyRequest = new HttpRequestMessage
+        {
+            Method = new HttpMethod(context.Request.Method),
+            RequestUri = targetUri,
+            Content = context.Request.Body.Length > 0 ? new StreamContent(context.Request.Body) : null
+        };
+
+        // Copy headers, but exclude Aegis-specific ones
+        foreach (var header in context.Request.Headers)
+        {
+            // Skip headers that must NOT be forwarded
+            if (header.Key == "Authorization" ||          // JWT for Aegis, not for upstream
+                header.Key == "Host" ||                   // Will be set from RequestUri
+                header.Key == "Connection" ||
+                header.Key == "Content-Length")           // Handled by HttpClient
+                continue;
+
+            // Keep all other headers (including Accept, AgentId, etc.)
+            proxyRequest.Headers.TryAddWithoutValidation(header.Key, header.Value.ToString());
+        }
+
+        // Optionally inject a real API key (if needed for the target)
+        // proxyRequest.Headers.Add("X-API-Key", "your-secret-key");
+
+        // Send the request
+        var response = await httpClient.SendAsync(proxyRequest, HttpCompletionOption.ResponseHeadersRead);
+
+        // Copy response back
+        context.Response.StatusCode = (int)response.StatusCode;
+        foreach (var header in response.Headers)
+            context.Response.Headers[header.Key] = header.Value.ToString();
+        foreach (var header in response.Content.Headers)
+            context.Response.Headers[header.Key] = header.Value.ToString();
+
+        await response.Content.CopyToAsync(context.Response.Body);
     }
 
     private async Task<string?> ReadBodyAsync(HttpRequest request)
