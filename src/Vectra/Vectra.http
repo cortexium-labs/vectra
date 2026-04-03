@@ -1,6 +1,24 @@
-@Vectra.Gateway_HostAddress = http://localhost:5198
+@vectra.hostAddress = http://localhost:7080
 
-GET {{Vectra.Gateway_HostAddress}}/weatherforecast/
-Accept: application/json
+POST {{vectra.hostAddress}}/agents/
+Content-Type: application/json
 
+{
+  "name":"MyBot",
+  "ownerId":"user123",
+  "clientSecret":"supersecret"
+}
 ###
+
+POST {{vectra.hostAddress}}/tokens/
+Content-Type: application/json
+
+{
+  "agentId":"1799d4eb-2833-46d2-95bb-da6a977e8ba4",
+  "clientSecret":"supersecret"
+}
+###
+
+GET {{vectra.hostAddress}}/proxy/https://api.github.com/users/octocat
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNzk5ZDRlYi0yODMzLTQ2ZDItOTViYi1kYTZhOTc3ZThiYTQiLCJhZ2VudF9uYW1lIjoiTXlCb3QiLCJ0cnVzdF9zY29yZSI6IjAuNSIsImp0aSI6IjQxNDc4NDJiLTRhYTUtNGIxYi04NmJhLWFiYWZiNzljOTE0NCIsImV4cCI6MTc3NTI0NDcwMCwiaXNzIjoidmVjdHJhIiwiYXVkIjoiYWdlbnRzIn0.yCvZ20nI-j1rwWmc-rwZiA-nAK_of7IkWpx6NVHErPk
