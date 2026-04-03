@@ -1,15 +1,19 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
 using Vectra.Core.DTOs;
 using Vectra.Core.UseCases;
 using Vectra.Extensions;
 
-namespace Vectra.Endpoints;
+namespace Vectra.Endpoints.V1;
 
 public class Tokens : EndpointGroupBase
 {
     public override void Map(WebApplication app)
     {
-        var group = app.MapGroup(this).WithTags("Authentication");
+        var group = app
+            .MapGroup("/v{version:apiVersion}/Tokens")
+            .HasApiVersion(new ApiVersion(1, 0))
+            .WithTags("Authentication");
 
         group.MapPost("", GetToken)
             .WithName("GetToken")

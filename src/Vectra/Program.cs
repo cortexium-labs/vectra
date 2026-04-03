@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.DataProtection;
 using Vectra.Extensions;
 using Vectra.Infrastructure;
@@ -41,6 +42,14 @@ static void ConfigureServices(WebApplicationBuilder builder, string[] args)
     services
         .AddReverseProxy()
         .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+    services.AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        options.ReportApiVersions = true;
+    });
 
     if (!env.IsDevelopment())
         builder.Services.ParseVectraArguments(args);
