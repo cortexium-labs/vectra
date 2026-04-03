@@ -1,6 +1,6 @@
 ﻿namespace Vectra.Core.Interfaces;
 
-public interface IOpaClient
+public interface IPolicyEngine
 {
     Task<OpaDecision> EvaluateAsync(string package, object input, CancellationToken cancellationToken = default);
 }
