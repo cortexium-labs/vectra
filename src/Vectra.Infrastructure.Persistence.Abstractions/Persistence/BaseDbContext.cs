@@ -18,7 +18,9 @@ public abstract class BaseDbContext : DbContext, IDatabaseContext
 
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<Agent> Agents { get; set; }
-    public DbSet<Policy> Policies { get; set; }
+    public DbSet<PolicyDefinition> Policies { get; set; }
+    public DbSet<PolicyRule> Rules { get; set; }
+    public DbSet<RuleCondition> Conditions { get; set; }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
