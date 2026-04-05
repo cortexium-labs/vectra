@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using System.Text;
-using Vectra.Core.Entities;
-using Vectra.Core.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using Vectra.Application.Abstractions.Executions;
+using Vectra.Domain.Agents;
 
 namespace Vectra.Infrastructure.Security;
 
