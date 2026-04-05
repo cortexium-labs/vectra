@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Vectra.Extensions;
 using Vectra.Infrastructure;
 using Vectra.Middleware;
+using Vectra.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +36,8 @@ static void ConfigureServices(WebApplicationBuilder builder, string[] args)
         .AddVectraServer()
         .AddVectraProxyForwarder()
         .AddVectraHealthChecker()
-        .AddVectraVersion();
+        .AddVectraVersion()
+        .AddVectraApplication();
 
     if (!env.IsDevelopment())
         builder.Services.ParseVectraArguments(args);
