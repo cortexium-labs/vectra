@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Vectra.Core.Interfaces;
+using Vectra.Application.Abstractions.Executions;
 
 namespace Vectra.Infrastructure.Policy;
 

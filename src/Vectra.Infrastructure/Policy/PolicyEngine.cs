@@ -2,8 +2,9 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using Vectra.Core.Entities;
-using Vectra.Core.Interfaces;
+using Vectra.Application.Abstractions.Executions;
+using Vectra.Application.Abstractions.Persistence;
+using Vectra.Domain.Policies;
 
 namespace Vectra.Infrastructure.Policy;
 

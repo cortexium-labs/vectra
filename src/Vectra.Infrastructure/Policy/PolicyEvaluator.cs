@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.RegularExpressions;
-using Vectra.Core.Entities;
+using Vectra.Domain.Policies;
 
 namespace Vectra.Infrastructure.Policy;
 
