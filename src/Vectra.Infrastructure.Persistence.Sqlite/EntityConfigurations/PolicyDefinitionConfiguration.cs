@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Vectra.Core.Entities;
+using Vectra.Domain.Policies;
 
 namespace Vectra.Infrastructure.Persistence.Sqlite.EntityConfigurations;
 

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Vectra.Core.Interfaces;
+using Vectra.Application.Abstractions.Persistence;
 using Vectra.Infrastructure.Persistence.Abstractions;
 using Vectra.Infrastructure.Persistence.Sqlite.Contexts;
 using Vectra.Infrastructure.Persistence.Sqlite.Repositories;
@@ -16,7 +16,7 @@ public static class DependencyInjection
         services
             .AddScoped<IAgentRepository, AgentRepository>()
             .AddScoped<IPolicyRepository, PolicyRepository>()
-            .AddScoped<IAuditRepository, AuditRepository>()
+            //.AddScoped<IAuditRepository, AuditRepository>()
             .AddScoped<IDatabaseInitializer, SqliteDatabaseInitializer>()
             .AddPooledDbContextFactory<SqliteApplicationContext>(options =>
             {

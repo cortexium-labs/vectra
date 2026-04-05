@@ -16,7 +16,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Vectra.Infrastructure.Persistence.Abstractions\Vectra.Infrastructure.Persistence.Abstractions.csproj" />
+		<ProjectReference Include="..\Vectra.Infrastructure.Persistence.Common\Vectra.Infrastructure.Persistence.Common.csproj" />
 	</ItemGroup>
 
 </Project>

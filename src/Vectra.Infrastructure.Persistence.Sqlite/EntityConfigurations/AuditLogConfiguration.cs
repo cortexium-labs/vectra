@@ -1,16 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Vectra.Core.Entities;
+using Vectra.Domain.AuditTrails;
 
 namespace Vectra.Infrastructure.Persistence.Sqlite.EntityConfigurations;
 
-public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
+public class AuditLogConfiguration : IEntityTypeConfiguration<AuditTrail>
 {
-    public void Configure(EntityTypeBuilder<AuditLog> builder)
+    public void Configure(EntityTypeBuilder<AuditTrail> builder)
     {
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.Action).IsRequired();
-        builder.Property(e => e.TargetUrl).IsRequired();
-        builder.Property(e => e.Status).IsRequired();
     }
 }

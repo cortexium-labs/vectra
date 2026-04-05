@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Vectra.Core.Entities;
+using Vectra.Domain.Agents;
 
 namespace Vectra.Infrastructure.Persistence.Sqlite.EntityConfigurations;
 

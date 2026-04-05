@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Vectra.Core.Entities;
-using Vectra.Core.Interfaces;
+using Vectra.Application.Abstractions.Persistence;
+using Vectra.Domain.Agents;
 using Vectra.Infrastructure.Persistence.Sqlite.Contexts;
 
 namespace Vectra.Infrastructure.Persistence.Sqlite.Repositories;
