@@ -8,5 +8,5 @@ public enum ErrorCategory
     Infrastructure,
     Persistence,
     Security,
-    Serializations
+    Serialization
 }
