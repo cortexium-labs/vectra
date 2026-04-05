@@ -10,6 +10,7 @@ using Vectra.Configuration.Server;
 using Vectra.Exceptions;
 using Vectra.Services;
 using Vectra.Application.Abstractions.Versioning;
+using Vectra.Infrastructure;
 
 namespace Vectra.Extensions;
 
@@ -44,7 +45,9 @@ public static class ServiceCollectionExtensions
     public static void AddVectraLoggingFilter(this ILoggingBuilder builder)
     {
         builder.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
+        
     }
+
     #endregion
 
     #region Health checks

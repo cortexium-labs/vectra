@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Serilog;
 using Vectra.Configuration.Server;
 
 namespace Vectra.Extensions;
@@ -32,7 +33,7 @@ public static class WebApplicationBuilderExtensions
 
             if (!httpsPort.HasValue)
             {
-                Console.WriteLine($"Configuring HTTP endpoint only: HTTP {httpPort}");
+                Log.Information($"Configuring HTTP endpoint only: HTTP {httpPort}");
                 return;
             }
 
@@ -73,7 +74,7 @@ public static class WebApplicationBuilderExtensions
             ConfigureListenOptions(listenOptions, httpsConfig);
         });
 
-        Console.WriteLine($"Configuring HTTP and HTTPS endpoints: HTTP {httpPort}, HTTPS {httpsPort}");
+        Log.Information($"Configuring HTTP and HTTPS endpoints: HTTP {httpPort}, HTTPS {httpsPort}");
     }
 
     private static void ConfigureListenOptions(
