@@ -1,8 +1,11 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using StackExchange.Redis;
 using Vectra.Application.Abstractions.Dispatchers;
 using Vectra.Application.Abstractions.Executions;
+using Vectra.Infrastructure.Configuration.Logging;
 using Vectra.Infrastructure.Decision;
 using Vectra.Infrastructure.Dispatchers;
 using Vectra.Infrastructure.Hitl;
@@ -62,6 +65,22 @@ public static class DependencyInjection
 
         // YARP forwarder
         services.AddHttpForwarder();
+
+        return services;
+    }
+
+    public static IServiceCollection AddVectraLogging(this IServiceCollection services, IConfiguration configuration)
+    {
+        var loggingConfiguration = new LoggingConfiguration();
+        configuration.GetSection("LoggingOptions").Bind(loggingConfiguration);
+
+        Log.Logger = Logging.LoggerFactory.CreateLogger(loggingConfiguration);
+
+        services.AddLogging(builder =>
+        {
+            builder.ClearProviders();
+            builder.AddSerilog(Log.Logger, dispose: true);
+        });
 
         return services;
     }

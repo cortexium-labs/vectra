@@ -1,14 +1,15 @@
 ﻿namespace Vectra.Infrastructure.Configuration.Logging;
 
-public sealed record SeqLoggingPolicy
+public sealed record SeqLoggingConfiguration
 {
+    public bool Enabled { get; set; } = false;
     public string LogLevel { get; init; }
     public string? ApiKey { get; init; }
     public string? Url { get; init; }
 
-    public static SeqLoggingPolicy Create()
+    public static SeqLoggingConfiguration Create()
     {
-        return new SeqLoggingPolicy
+        return new SeqLoggingConfiguration
         {
             LogLevel = "Information"
         };

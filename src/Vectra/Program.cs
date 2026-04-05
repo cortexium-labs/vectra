@@ -30,14 +30,15 @@ static void ConfigureServices(WebApplicationBuilder builder, string[] args)
             .SetApplicationName("VectraGateway");
 
     services
-        .AddInfrastructure(builder.Configuration)
+        .AddInfrastructure(config)
         .AddFlowSynxPersistence()
         .AddVectraApiDocumentation()
         .AddVectraServer()
         .AddVectraProxyForwarder()
         .AddVectraHealthChecker()
         .AddVectraVersion()
-        .AddVectraApplication();
+        .AddVectraApplication()
+        .AddVectraLoggingServices(config);
 
     if (!env.IsDevelopment())
         builder.Services.ParseVectraArguments(args);
