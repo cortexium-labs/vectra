@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-using Vectra.BuildingBlocks.Services;
+using Vectra.Application.Abstractions.Versioning;
 
 namespace Vectra.Services;
 
