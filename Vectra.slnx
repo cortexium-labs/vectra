@@ -1,10 +1,17 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Vectra.BuildingBlocks/Vectra.BuildingBlocks.csproj" Id="761927d6-9aa6-49aa-b06d-b34fc4ec2f78" />
-    <Project Path="src/Vectra.Core/Vectra.Core.csproj" />
-    <Project Path="src/Vectra/Vectra.csproj" Id="c9bb9cb7-ada0-450f-b0de-55627589595f" />
-    <Project Path="src/Vectra.Infrastructure.Persistence.Abstractions/Vectra.Infrastructure.Persistence.Abstractions.csproj" Id="7d7a4a3b-4981-4938-8ed1-a66a72b5f037" />
+  </Folder>
+  <Folder Name="/src/Core/">
+    <Project Path="src/Vectra.Application/Vectra.Application.csproj" />
+    <Project Path="src/Vectra.Domain/Vectra.Domain.csproj" Id="c6db4cba-56e6-436c-99c7-a04ce0ebc7d9" />
+  </Folder>
+  <Folder Name="/src/Infrastructure/">
+    <Project Path="src/Vectra.Infrastructure.Persistence.Common/Vectra.Infrastructure.Persistence.Common.csproj" Id="7d7a4a3b-4981-4938-8ed1-a66a72b5f037" />
     <Project Path="src/Vectra.Infrastructure.Persistence.Sqlite/Vectra.Infrastructure.Persistence.Sqlite.csproj" Id="95d42591-0f64-4560-a0d8-cd00372b9126" />
     <Project Path="src/Vectra.Infrastructure/Vectra.Infrastructure.csproj" Id="4b8d26af-2fb3-448b-a0af-176761982f70" />
+  </Folder>
+  <Folder Name="/src/Presentation/">
+    <Project Path="src/Vectra/Vectra.csproj" Id="c9bb9cb7-ada0-450f-b0de-55627589595f" />
   </Folder>
 </Solution>
