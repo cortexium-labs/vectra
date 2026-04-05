@@ -38,7 +38,7 @@ static void ConfigureServices(WebApplicationBuilder builder, string[] args)
         .AddVectraHealthChecker()
         .AddVectraVersion()
         .AddVectraApplication()
-        .AddVectraLoggingServices(config);
+        .AddVectraLogging(config);
 
     if (!env.IsDevelopment())
         builder.Services.ParseVectraArguments(args);
