@@ -1,5 +1,5 @@
-﻿using Vectra.Core.DTOs;
-using Vectra.Core.Interfaces;
+﻿using Vectra.Application.Abstractions.Executions;
+using Vectra.Application.Models;
 
 namespace Vectra.Infrastructure.Risk;
 
