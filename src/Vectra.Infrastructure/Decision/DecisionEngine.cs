@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Vectra.Core.DTOs;
-using Vectra.Core.Entities;
-using Vectra.Core.Interfaces;
+using Vectra.Application.Abstractions.Executions;
+using Vectra.Application.Models;
+using Vectra.Domain.Policies;
 
 namespace Vectra.Infrastructure.Decision;
 
