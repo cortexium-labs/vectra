@@ -2,6 +2,7 @@
 using Vectra.Application.Abstractions.Dispatchers;
 using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Abstractions.Persistence;
+using Vectra.Application.Abstractions.Security;
 using Vectra.Application.Errors;
 using Vectra.BuildingBlocks.Errors;
 using Vectra.BuildingBlocks.Results;
@@ -14,15 +15,18 @@ internal class GenerateTokenHandler : IActionHandler<GenerateTokenRequest, Resul
     private readonly ILogger<GenerateTokenHandler> _logger;
     private readonly IAgentRepository _agentRepository;
     private readonly ITokenService _tokenService;
+    private readonly ISecretHasher _secretHasher;
 
     public GenerateTokenHandler(
         ILogger<GenerateTokenHandler> logger,
         IAgentRepository agentRepository,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        ISecretHasher secretHasher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _agentRepository = agentRepository ?? throw new ArgumentNullException(nameof(agentRepository));
         _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+        _secretHasher = secretHasher ?? throw new ArgumentNullException(nameof(secretHasher));
     }
 
     public async Task<Result<GenerateTokenResult>> Handle(GenerateTokenRequest request, CancellationToken cancellationToken)
@@ -32,7 +36,7 @@ internal class GenerateTokenHandler : IActionHandler<GenerateTokenRequest, Resul
             return Result<GenerateTokenResult>.Failure(Error.NotFound(
                 ApplicationErrorCodes.AgentNotFound, "Agent not found or inactive"));
 
-        if (!BCrypt.Net.BCrypt.Verify(request.ClientSecret, agent.ClientSecretHash))
+        if (!_secretHasher.Verify(request.ClientSecret, agent.ClientSecretHash))
             return Result<GenerateTokenResult>.Failure(Error.Unauthorized(
                 ApplicationErrorCodes.InvalidClientSession, "Invalid client secret"));
 
