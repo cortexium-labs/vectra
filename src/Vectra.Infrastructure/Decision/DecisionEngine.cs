@@ -12,7 +12,11 @@ public class DecisionEngine : IDecisionEngine
     private readonly ISemanticEngine _semanticEngine;
     private readonly IConfiguration _config;
 
-    public DecisionEngine(IPolicyEngine policyEngine, IRiskScoringService riskScoring, ISemanticEngine semanticEngine, IConfiguration config)
+    public DecisionEngine(
+        IPolicyEngine policyEngine, 
+        IRiskScoringService riskScoring, 
+        ISemanticEngine semanticEngine, 
+        IConfiguration config)
     {
         _policyEngine = policyEngine;
         _riskScoring = riskScoring;

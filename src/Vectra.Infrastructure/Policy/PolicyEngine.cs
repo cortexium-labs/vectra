@@ -1,9 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Vectra.Application.Abstractions.Executions;
-using Vectra.Application.Abstractions.Persistence;
 using Vectra.Domain.Policies;
 
 namespace Vectra.Infrastructure.Policy;
@@ -12,26 +10,27 @@ public class PolicyEngine : IPolicyEngine
 {
     private readonly IMemoryCache _memoryCache;
     private readonly IDistributedCache _redisCache;
-    private readonly IPolicyRepository _policyRepository;
+    private readonly IPolicyLoader _loader;
     private readonly ILogger<PolicyEngine> _logger;
+    private const string CacheKey = "all_policies";
 
     public PolicyEngine(
         IMemoryCache memoryCache,
         IDistributedCache redisCache,
-        IPolicyRepository policyRepository,
+        IPolicyLoader loader,
         ILogger<PolicyEngine> logger)
     {
         _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
         _redisCache = redisCache ?? throw new ArgumentNullException(nameof(redisCache));
-        _policyRepository = policyRepository ?? throw new ArgumentNullException(nameof(policyRepository));
+        _loader = loader ?? throw new ArgumentNullException(nameof(loader));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<PolicyDecision> EvaluateAsync(Guid policyId, Dictionary<string, object> input, Dictionary<string, object>? data = null)
     {
         var policy = await GetPolicyAsync(policyId);
-        if (policy == null || !policy.IsActive)
-            return PolicyDecision.Deny("Policy not found or inactive");
+        if (policy == null)
+            return PolicyDecision.Deny($"Policy {policyId} not found");
 
         var applicableRules = new List<PolicyRule>();
         foreach (var rule in policy.Rules.OrderByDescending(r => r.Priority))
@@ -52,39 +51,19 @@ public class PolicyEngine : IPolicyEngine
         };
     }
 
-    private async Task<PolicyDefinition?> GetPolicyAsync(Guid policyId)
+    public async Task<PolicyDefinition?> GetPolicyAsync(Guid policyId)
     {
-        if (_memoryCache.TryGetValue($"policy:{policyId}", out PolicyDefinition? policy))
-            return policy;
-
-        var redisKey = $"policy:{policyId}";
-        var cachedJson = await _redisCache.GetStringAsync(redisKey);
-        if (cachedJson != null)
-        {
-            policy = JsonSerializer.Deserialize<PolicyDefinition>(cachedJson);
-            if (policy != null)
-            {
-                SetMemoryCache(policy);
-                return policy;
-            }
-        }
-
-        policy = await _policyRepository.GetActiveByIdAsync(policyId);
-        if (policy != null)
-        {
-            var serialized = JsonSerializer.Serialize(policy);
-            await _redisCache.SetStringAsync(redisKey, serialized, new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
-            });
-            SetMemoryCache(policy);
-        }
-
-        return policy;
+        var allPolicies = await GetAllPoliciesAsync();
+        return allPolicies.TryGetValue(policyId, out var policy) ? policy : null;
     }
 
-    private void SetMemoryCache(PolicyDefinition policy)
+    private async Task<Dictionary<Guid, PolicyDefinition>> GetAllPoliciesAsync()
     {
-        _memoryCache.Set($"policy:{policy.Id}", policy, TimeSpan.FromMinutes(2));
+        if (_memoryCache.TryGetValue(CacheKey, out Dictionary<Guid, PolicyDefinition>? policies) && policies != null)
+            return policies;
+
+        policies = await _loader.LoadAllAsync();
+        _memoryCache.Set(CacheKey, policies, TimeSpan.FromMinutes(5)); // fallback TTL
+        return policies;
     }
 }
