@@ -1,5 +1,6 @@
 ﻿using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Abstractions.Persistence;
+using Vectra.Application.Abstractions.Security;
 using Vectra.Application.Models;
 using Vectra.Domain.Agents;
 using Yarp.ReverseProxy.Forwarder;
@@ -56,20 +57,41 @@ public class ProxyMiddleware
         var hitlService = context.RequestServices.GetRequiredService<IHitlService>();
         var agentRepository = context.RequestServices.GetRequiredService<IAgentRepository>();
 
-        // 5. Authentication
-        if (!context.Items.TryGetValue("AgentId", out var agentIdObj) || agentIdObj is not Guid agentId)
-        {
-            context.Response.StatusCode = 401;
-            await context.Response.WriteAsync("Missing or invalid authentication");
-            return;
-        }
+        // 5. Authentication – scheme-aware
+        var authScheme = context.Items.TryGetValue("AuthScheme", out var schemeObj) && schemeObj is AgentAuthScheme scheme
+            ? scheme
+            : AgentAuthScheme.Jwt; // default to JWT for backward compat
 
-        var agent = await agentRepository.GetByIdAsync(agentId);
-        if (agent == null || agent.Status != AgentStatus.Active)
+        Guid agentId;
+        double trustScore;
+
+        if (authScheme == AgentAuthScheme.None)
         {
-            context.Response.StatusCode = 403;
-            await context.Response.WriteAsync("Agent is not active");
-            return;
+            // No authentication – use defaults set by AgentAuthMiddleware
+            agentId = context.Items.TryGetValue("AgentId", out var id) && id is Guid g ? g : Guid.Empty;
+            trustScore = context.Items.TryGetValue("TrustScore", out var ts) && ts is double t ? t : 0.5;
+        }
+        else
+        {
+            // JWT (or future Basic) – require valid agent identity
+            if (!context.Items.TryGetValue("AgentId", out var agentIdObj) || agentIdObj is not Guid authenticatedId)
+            {
+                context.Response.StatusCode = 401;
+                await context.Response.WriteAsync("Missing or invalid authentication");
+                return;
+            }
+
+            agentId = authenticatedId;
+
+            var agent = await agentRepository.GetByIdAsync(agentId);
+            if (agent == null || agent.Status != AgentStatus.Active)
+            {
+                context.Response.StatusCode = 403;
+                await context.Response.WriteAsync("Agent is not active");
+                return;
+            }
+
+            trustScore = agent.TrustScore;
         }
 
         // 6. Build RequestContext for policy evaluation (read body)
@@ -80,7 +102,7 @@ public class ProxyMiddleware
             Path = targetUri.PathAndQuery,
             Headers = context.Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()),
             AgentId = agentId,
-            TrustScore = agent.TrustScore,
+            TrustScore = trustScore,
             Body = await ReadBodyAsync(context.Request)
         };
 

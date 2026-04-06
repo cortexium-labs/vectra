@@ -27,8 +27,11 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped(provider =>
         {
-            var tenantConfig = provider.GetRequiredService<IConfiguration>();
-            return tenantConfig.BindSection<ServerConfiguration>("System:Server");
+            var configuration = provider.GetRequiredService<IConfiguration>();
+            var serverConfiguration = configuration.GetSection("Server").Get<ServerConfiguration>()
+                     ?? new ServerConfiguration();
+
+            return serverConfiguration;
         });
 
         return services;

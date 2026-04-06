@@ -61,7 +61,7 @@ static async Task ConfigureWebApplication(WebApplication app)
     app.UseVectraCustomHeaders();
 
     app.UseRouting();
-    app.UseMiddleware<JwtMiddleware>();
+    app.UseMiddleware<AgentAuthMiddleware>();
 
     app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/proxy"), proxyBranch =>
     {
