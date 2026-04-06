@@ -1,24 +1,34 @@
 ﻿using Microsoft.Extensions.Options;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Vectra.Application.Abstractions.Executions;
+using Vectra.Application.Abstractions.Security;
 using Vectra.Domain.Agents;
+using Vectra.Infrastructure.Configuration.Security;
 
 namespace Vectra.Infrastructure.Security;
 
 public class JwtTokenService : ITokenService
 {
-    private readonly JwtSettings _settings;
+    private readonly AgentAuthConfiguration _agentAuthConfiguration;
 
-    public JwtTokenService(IOptions<JwtSettings> settings)
+    public JwtTokenService(IOptions<AgentAuthConfiguration> authSettings)
     {
-        _settings = settings.Value;
+        _agentAuthConfiguration = authSettings.Value;
     }
 
     public string GenerateToken(Agent agent)
     {
+        if (_agentAuthConfiguration.Scheme == AgentAuthScheme.None)
+            return string.Empty;
+
+        var jwtSettings = _agentAuthConfiguration.Jwt;
+        if (string.IsNullOrEmpty(jwtSettings.Secret))
+            throw new InvalidOperationException(
+                "JWT Secret is not configured. Set AgentAuth:Jwt:Secret in application settings.");
+
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, agent.Id.ToString()),
@@ -27,13 +37,13 @@ public class JwtTokenService : ITokenService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
-            issuer: _settings.Issuer,
-            audience: _settings.Audience,
+            issuer: jwtSettings.Issuer,
+            audience: jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_settings.ExpirationMinutes),
+            expires: DateTime.UtcNow.AddMinutes(jwtSettings.ExpirationMinutes),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
@@ -41,8 +51,16 @@ public class JwtTokenService : ITokenService
 
     public ClaimsPrincipal? ValidateToken(string token)
     {
+        if (_agentAuthConfiguration.Scheme == AgentAuthScheme.None)
+            return null;
+
+        var jwtSettings = _agentAuthConfiguration.Jwt;
+        if (string.IsNullOrEmpty(jwtSettings.Secret))
+            throw new InvalidOperationException(
+                "JWT Secret is not configured. Set AgentAuth:Jwt:Secret in application settings.");
+
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(_settings.Secret);
+        var key = Encoding.UTF8.GetBytes(jwtSettings.Secret);
         try
         {
             var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
@@ -50,9 +68,9 @@ public class JwtTokenService : ITokenService
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = true,
-                ValidIssuer = _settings.Issuer,
+                ValidIssuer = jwtSettings.Issuer,
                 ValidateAudience = true,
-                ValidAudience = _settings.Audience,
+                ValidAudience = jwtSettings.Audience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             }, out _);

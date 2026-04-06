@@ -1,11 +1,14 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Serilog;
 using StackExchange.Redis;
 using Vectra.Application.Abstractions.Dispatchers;
 using Vectra.Application.Abstractions.Executions;
+using Vectra.Application.Abstractions.Security;
 using Vectra.Infrastructure.Configuration.Logging;
+using Vectra.Infrastructure.Configuration.Security;
 using Vectra.Infrastructure.Decision;
 using Vectra.Infrastructure.Dispatchers;
 using Vectra.Infrastructure.Hitl;
@@ -20,9 +23,25 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Security
-        services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
-        services.AddScoped<ITokenService, JwtTokenService>();
+        var agentAuthConfiguration = configuration.GetSection("AgentAuth").Get<AgentAuthConfiguration>()
+                                     ?? new AgentAuthConfiguration();
+
+        services.AddSingleton(Options.Create(agentAuthConfiguration));
+        services.AddScoped<JwtTokenService>();
+        services.AddScoped<ITokenService>(sp => sp.GetRequiredService<JwtTokenService>());
+
+        // Register the selected authenticator scheme
+        switch (agentAuthConfiguration.Scheme)
+        {
+            case AgentAuthScheme.None:
+                services.AddSingleton<IAgentAuthenticator, NoneAgentAuthenticator>();
+                break;
+
+            case AgentAuthScheme.Jwt:
+            default:
+                services.AddScoped<IAgentAuthenticator, JwtAgentAuthenticator>();
+                break;
+        }
 
         // Policy engine
         services.AddScoped<IPolicyEngine, PolicyEngine>();
@@ -56,11 +75,6 @@ public static class DependencyInjection
         // Decision engine
         services.AddScoped<IDecisionEngine, DecisionEngine>();
 
-        //// Use cases
-        //services.AddScoped<RegisterAgentUseCase>();
-        //services.AddScoped<AuthenticateAgentUseCase>();
-        //services.AddScoped<EvaluateRequestUseCase>();
-
         services.AddScoped<IDispatcher, Dispatcher>();
 
         // YARP forwarder
@@ -71,8 +85,8 @@ public static class DependencyInjection
 
     public static IServiceCollection AddVectraLogging(this IServiceCollection services, IConfiguration configuration)
     {
-        var loggingConfiguration = new LoggingConfiguration();
-        configuration.GetSection("LoggingOptions").Bind(loggingConfiguration);
+        var loggingConfiguration = configuration.GetSection("Logger").Get<LoggingConfiguration>()
+                             ?? new LoggingConfiguration();
 
         Log.Logger = Logging.LoggerFactory.CreateLogger(loggingConfiguration);
 
