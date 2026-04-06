@@ -30,7 +30,6 @@ public class AgentRepository : IAgentRepository
     public async Task UpdateAsync(Agent agent, CancellationToken cancellationToken = default)
     {
         await using var context = await _appContextFactory.CreateDbContextAsync(cancellationToken);
-        context.Entry(agent).State = EntityState.Detached;
         context.Agents.Update(agent);
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
