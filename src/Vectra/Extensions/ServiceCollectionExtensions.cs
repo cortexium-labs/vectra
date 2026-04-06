@@ -1,14 +1,12 @@
-﻿using FlowSynx.Configuration.Database;
-using Vectra.Infrastructure.Persistence.Sqlite;
-using Microsoft.OpenApi;
+﻿using Microsoft.OpenApi;
 using System.Text.Json.Serialization;
-using Vectra.Infrastructure.Persistence.Abstractions;
+using Vectra.Application.Abstractions.Versioning;
 using Vectra.Configuration.Database;
-using Vectra.Infrastructure.Persistence.Sqlite.Configuration;
 using Vectra.Configuration.Server;
 using Vectra.Exceptions;
+using Vectra.Infrastructure.Persistence.Common;
+using Vectra.Infrastructure.Persistence.Sqlite;
 using Vectra.Services;
-using Vectra.Application.Abstractions.Versioning;
 
 namespace Vectra.Extensions;
 
@@ -130,17 +128,13 @@ public static class ServiceCollectionExtensions
 
     #region Persistence
 
-    public static IServiceCollection AddFlowSynxPersistence(this IServiceCollection services)
+    public static IServiceCollection AddVectraPersistence(this IServiceCollection services, IConfiguration configuration)
     {
-        using var scope = services.BuildServiceProvider().CreateScope();
-        var tenantConfig = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-
-        var dbConfig = LoadDatabaseConfiguration(tenantConfig);
+        var dbConfig = LoadDatabaseConfiguration(configuration);
         var activeConnection = dbConfig.GetActiveConnection();
 
         services.AddSingleton(dbConfig);
         services.AddSingleton(activeConnection);
-        services.AddSingleton<IDatabaseProvider>(new DatabaseProvider(activeConnection.Provider));
 
         RegisterPersistenceLayer(services, activeConnection);
 
@@ -151,55 +145,51 @@ public static class ServiceCollectionExtensions
     {
         switch (activeConnection.Provider.ToLowerInvariant())
         {
-            case "postgres":
-                //services.AddPostgresPersistenceLayer(activeConnection);
-                break;
-
+            //case "postgres":
+            //    services.AddPostgresPersistenceLayer(activeConnection);
+            //    break;
             case "sqlite":
                 services.AddSqlitePersistenceLayer(activeConnection);
                 break;
-
             default:
                 throw new InvalidOperationException($"Unsupported database provider '{activeConnection.Provider}'.");
         }
     }
 
-    private static DatabaseConfiguration LoadDatabaseConfiguration(IConfiguration tenantConfig)
+    private static DatabaseConfiguration LoadDatabaseConfiguration(IConfiguration configuration)
     {
-        var configuration = tenantConfig;
         var databasesSection = configuration.GetSection(DatabaseSectionName);
-
         if (!databasesSection.Exists() || !databasesSection.GetChildren().Any())
             return CreateDefaultDatabaseConfiguration();
 
-        var config = new DatabaseConfiguration
-        {
-            Default = databasesSection.GetValue<string>("Default") ?? DefaultSqliteProvider
-        };
+        var defaultProvider = databasesSection.GetValue<string>("Default") ?? DefaultSqliteProvider;
+        var connections = new Dictionary<string, DatabaseConnection>();
 
         var connectionsSection = databasesSection.GetSection("Connections");
         if (!connectionsSection.Exists() || !connectionsSection.GetChildren().Any())
         {
-            config.Connections[DefaultSqliteProvider] = CreateDefaultSqliteConnection();
-            return config;
+            connections[defaultProvider] = CreateDefaultSqliteConnection();
+            return new DatabaseConfiguration { Default = defaultProvider, Connections = connections };
         }
 
-        foreach (var connectionSection in connectionsSection.GetChildren())
+        foreach (var connSection in connectionsSection.GetChildren())
         {
-            var provider = connectionSection.GetValue<string>("Provider") ?? DefaultSqliteProvider;
+            var provider = connSection.GetValue<string>("Provider") ?? DefaultSqliteProvider;
+            var connectionString = connSection.GetValue<string>("ConnectionString");
 
-            DatabaseConnection connection = provider.ToLowerInvariant() switch
-            {
-                //"postgres" => connectionSection.Get<PostgreDatabaseConnection>()!,
-                "sqlite" => connectionSection.Get<SqliteDatabaseConnection>()!,
-                _ => throw new InvalidOperationException($"Unsupported provider: {provider}")
-            };
+            if (string.IsNullOrEmpty(connectionString))
+                throw new InvalidOperationException($"Missing ConnectionString for provider '{provider}'.");
 
-            connection.Provider = provider;
-            config.Connections[connectionSection.Key] = connection;
+            // Use the section key as the logical name (e.g., "Postgres", "Sqlite")
+            var logicalName = connSection.Key;
+            connections[logicalName] = new DatabaseConnection(provider, connectionString);
         }
 
-        return config;
+        // Ensure the default provider exists in the dictionary
+        if (!connections.ContainsKey(defaultProvider))
+            connections[defaultProvider] = CreateDefaultSqliteConnection();
+
+        return new DatabaseConfiguration { Default = defaultProvider, Connections = connections };
     }
 
     private static DatabaseConfiguration CreateDefaultDatabaseConfiguration() => new()
@@ -211,11 +201,8 @@ public static class ServiceCollectionExtensions
         }
     };
 
-    private static SqliteDatabaseConnection CreateDefaultSqliteConnection() => new()
-    {
-        Provider = DefaultSqliteProvider,
-        FilePath = "flowsynx.db"
-    };
+    private static DatabaseConnection CreateDefaultSqliteConnection() =>
+            new DatabaseConnection(DefaultSqliteProvider, "Data Source=vectra.db");
 
     #endregion
 

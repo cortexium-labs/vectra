@@ -3,7 +3,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Vectra.Application.Abstractions.Serializations;
 using Vectra.Configuration.Server;
 using Vectra.HealthCheck;
-using Vectra.Infrastructure.Persistence.Abstractions;
+using Vectra.Infrastructure.Persistence.Common;
 using Vectra.Middleware;
 
 namespace Vectra.Extensions;

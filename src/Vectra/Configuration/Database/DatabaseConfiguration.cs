@@ -1,5 +1,4 @@
-﻿using Vectra.Infrastructure.Persistence.Abstractions;
-using Vectra.Infrastructure.Persistence.Sqlite.Configuration;
+﻿using Vectra.Infrastructure.Persistence.Common;
 
 namespace Vectra.Configuration.Database;
 
@@ -11,13 +10,9 @@ public class DatabaseConfiguration
     public DatabaseConnection GetActiveConnection()
     {
         if (Connections.TryGetValue(Default, out var connection))
-        {
-            connection.BuildConnectionString();
             return connection;
-        }
 
-        var fallback = new SqliteDatabaseConnection { FilePath = "vectra.db" };
-        fallback.BuildConnectionString();
-        return fallback;
+        var fallback = "Data Source=vectra.db";
+        return new DatabaseConnection("SQLite", fallback);
     }
 }

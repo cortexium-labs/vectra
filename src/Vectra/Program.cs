@@ -31,7 +31,7 @@ static void ConfigureServices(WebApplicationBuilder builder, string[] args)
 
     services
         .AddInfrastructure(config)
-        .AddFlowSynxPersistence()
+        .AddVectraPersistence(config)
         .AddVectraApiDocumentation()
         .AddVectraServer()
         .AddVectraProxyForwarder()
