@@ -10,6 +10,7 @@ public static class LoggerFactory
     {
         var config = new LoggerConfiguration()
             .Enrich.FromLogContext()
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
             .Enrich.WithMachineName()
             .Enrich.WithThreadId()
             .Enrich.WithEnvironmentUserName();

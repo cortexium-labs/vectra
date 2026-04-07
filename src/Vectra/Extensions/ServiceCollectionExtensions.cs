@@ -39,16 +39,6 @@ public static class ServiceCollectionExtensions
 
     #endregion
 
-    #region Logging
-
-    public static void AddVectraLoggingFilter(this ILoggingBuilder builder)
-    {
-        builder.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
-        
-    }
-
-    #endregion
-
     #region Health checks
 
     public static IServiceCollection AddVectraHealthChecker(this IServiceCollection services)
