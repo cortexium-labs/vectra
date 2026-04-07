@@ -35,7 +35,7 @@ public static class DependencyInjection
         services.AddSingleton<ISecretHasher, BcryptSecretHasher>();
 
         // Policy engine
-        services.AddScoped<IPolicyLoader, FileSystemPolicyLoader>();
+        services.AddSingleton<IPolicyLoader, FileSystemPolicyLoader>();
         services.AddScoped<IPolicyEngine, PolicyEngine>();
         services.AddScoped<IPolicyCacheInvalidator, PolicyCacheInvalidator>();
 

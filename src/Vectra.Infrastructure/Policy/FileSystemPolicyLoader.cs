@@ -17,6 +17,12 @@ public class FileSystemPolicyLoader : IPolicyLoader
         _logger = logger;
     }
 
+    public async Task<PolicyDefinition?> GetPolicyAsync(Guid policyId, CancellationToken ct)
+    {
+        var allPolicies = await LoadAllAsync(ct);
+        return allPolicies.TryGetValue(policyId, out var policy) ? policy : null;
+    }
+
     public async Task<Dictionary<Guid, PolicyDefinition>> LoadAllAsync(CancellationToken ct)
     {
         var policies = new Dictionary<Guid, PolicyDefinition>();
