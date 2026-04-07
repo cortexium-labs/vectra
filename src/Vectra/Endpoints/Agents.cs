@@ -13,6 +13,10 @@ public class Agents : EndpointGroupBase
     {
         var group = app.MapGroup(this).WithTags("Agents");
 
+        group.MapGet("", AgentsList)
+            .WithName("AgentsList")
+            .WithSummary("Get a list of AI agents");
+
         group.MapPost("", RegisterAgent)
             .WithName("RegisterAgent")
             .WithSummary("Register a new AI agent");
@@ -20,6 +24,16 @@ public class Agents : EndpointGroupBase
         group.MapPut("/{agentId}/policy", AssignPolicyToAgent)
             .WithName("AssignPolicyToAgent")
             .WithSummary("Assign a policy to an AI agent");
+    }
+
+    public static async Task<IResult> AgentsList(
+        [FromServices] IDispatcher dispatcher,
+        CancellationToken cancellationToken,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25)
+    {
+        var result = await dispatcher.AgentsList(page, pageSize, cancellationToken);
+        return result.ToHttpResult();
     }
 
     public static async Task<IResult> RegisterAgent(

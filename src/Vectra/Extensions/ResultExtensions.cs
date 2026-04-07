@@ -6,6 +6,25 @@ namespace Vectra.Extensions;
 
 public static class ResultExtensions
 {
+    public static IResult ToHttpResult<T>(this PaginatedResult<T> result)
+    {
+        if (result.IsSuccess)
+        {
+            return Results.Ok(new
+            {
+                result.Items,
+                result.PageNumber,
+                result.PageSize,
+                result.TotalCount,
+                result.TotalPages,
+                result.HasPreviousPage,
+                result.HasNextPage
+            });
+        }
+
+        return MapError(result.Error!);
+    }
+
     public static IResult ToHttpResult<T>(this Result<T> result)
     {
         if (result.IsSuccess)

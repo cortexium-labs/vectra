@@ -1,4 +1,5 @@
 ﻿using Vectra.Application.Abstractions.Dispatchers;
+using Vectra.Application.Features.Agents.AgentsList;
 using Vectra.Application.Features.Agents.AssignPolicy;
 using Vectra.Application.Features.Agents.RegisterAgent;
 using Vectra.Application.Features.Authentications.GenerateToken;
@@ -9,6 +10,19 @@ namespace Vectra.Application.Extensions;
 public static class DispatcherExtensions
 {
     #region Agents
+
+    public static Task<PaginatedResult<AgentsListResult>> AgentsList(
+        this IDispatcher dispatcher,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        return dispatcher.Dispatch(new AgentsListRequest
+        {
+            Page = page,
+            PageSize = pageSize
+        }, cancellationToken);
+    }
 
     public static Task<Result<CreateAgentResult>> RegisterAgent(
         this IDispatcher dispatcher,
