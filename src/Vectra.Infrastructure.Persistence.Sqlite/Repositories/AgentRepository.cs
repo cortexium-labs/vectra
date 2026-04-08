@@ -58,4 +58,14 @@ public class AgentRepository : IAgentRepository
         context.Agents.Update(agent);
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        await using var context = await _appContextFactory.CreateDbContextAsync(cancellationToken);
+        var agent = await context.Agents.FirstOrDefaultAsync(a => a.Id == id, cancellationToken).ConfigureAwait(false) 
+            ?? throw new InvalidOperationException($"Agent with ID {id} does not exist.");
+
+        context.Agents.Remove(agent);
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
 }

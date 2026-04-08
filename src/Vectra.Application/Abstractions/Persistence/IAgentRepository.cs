@@ -16,4 +16,6 @@ public interface IAgentRepository
     Task AddAsync(Agent agent, CancellationToken cancellationToken = default);
 
     Task UpdateAsync(Agent agent, CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }
