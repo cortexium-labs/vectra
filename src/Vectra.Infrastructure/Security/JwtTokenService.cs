@@ -5,7 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using Vectra.Application.Abstractions.Executions;
 using Vectra.Domain.Agents;
-using Vectra.Infrastructure.Configuration.Security;
+using Vectra.Infrastructure.Configuration.Security.AgentAuth;
 
 namespace Vectra.Infrastructure.Security;
 

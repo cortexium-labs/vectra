@@ -1,4 +1,4 @@
-﻿namespace Vectra.Configuration.Server;
+﻿namespace Vectra.Infrastructure.Configuration.System.Server;
 
 public class HttpServerConfiguration
 {

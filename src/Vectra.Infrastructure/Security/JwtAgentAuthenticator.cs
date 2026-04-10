@@ -6,7 +6,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Vectra.Application.Abstractions.Security;
 using Vectra.Domain.Agents;
-using Vectra.Infrastructure.Configuration.Security;
+using Vectra.Infrastructure.Configuration.Security.AgentAuth;
 
 namespace Vectra.Infrastructure.Security;
 

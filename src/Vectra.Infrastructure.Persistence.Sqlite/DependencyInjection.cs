@@ -11,14 +11,14 @@ namespace Vectra.Infrastructure.Persistence.Sqlite;
 public static class DependencyInjection
 {
     public static IServiceCollection AddSqlitePersistenceLayer(
-        this IServiceCollection services, DatabaseConnection databaseConnection)
+        this IServiceCollection services, string databaseConnection)
     {
         services
             .AddScoped<IAgentRepository, AgentRepository>()
             .AddScoped<IDatabaseInitializer, SqliteDatabaseInitializer>()
             .AddPooledDbContextFactory<SqliteApplicationContext>(options =>
             {
-                options.UseSqlite(databaseConnection.ConnectionString);
+                options.UseSqlite(databaseConnection);
             });
 
         return services;

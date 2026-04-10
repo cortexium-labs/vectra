@@ -1,4 +1,4 @@
-﻿namespace Vectra.Infrastructure.Configuration.Security;
+﻿namespace Vectra.Infrastructure.Configuration.Security.AgentAuth;
 
 public enum JwtProviderType
 {

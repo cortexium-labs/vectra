@@ -1,4 +1,4 @@
-﻿namespace Vectra.Infrastructure.Configuration.Logging;
+﻿namespace Vectra.Infrastructure.Configuration.Observability.Logging;
 
 public sealed record LoggingConfiguration
 {

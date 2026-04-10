@@ -1,6 +1,4 @@
-﻿using Vectra.Infrastructure.Persistence.Common;
-
-namespace Vectra.Configuration.Database;
+﻿namespace Vectra.Infrastructure.Configuration.System.Storage.Database;
 
 public class DatabaseConfiguration
 {

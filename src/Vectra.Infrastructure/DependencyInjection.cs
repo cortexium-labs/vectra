@@ -7,10 +7,9 @@ using StackExchange.Redis;
 using Vectra.Application.Abstractions.Dispatchers;
 using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Abstractions.Security;
-using Vectra.Infrastructure.Configuration.Hitl;
-using Vectra.Infrastructure.Configuration.Logging;
-using Vectra.Infrastructure.Configuration.Memory;
-using Vectra.Infrastructure.Configuration.Security;
+using Vectra.Infrastructure.Configuration.Features.Hitl;
+using Vectra.Infrastructure.Configuration.Observability.Logging;
+using Vectra.Infrastructure.Configuration.Security.AgentAuth;
 using Vectra.Infrastructure.Decision;
 using Vectra.Infrastructure.Dispatchers;
 using Vectra.Infrastructure.Hitl;
@@ -57,19 +56,20 @@ public static class DependencyInjection
 
         if (hitlConfiguration.Provider.Equals("Redis", StringComparison.OrdinalIgnoreCase))
         {
-            var memoryConfiguration = configuration.GetSection("Memory").Get<MemoryConfiguration>()
-                                      ?? new MemoryConfiguration();
+            //var memoryConfiguration = configuration.GetSection("Memory").Get<MemoryConfiguration>()
+            //                          ?? new MemoryConfiguration();
 
-            services.AddSingleton(Options.Create(memoryConfiguration));
+            //services.AddSingleton(Options.Create(memoryConfiguration));
 
+            var redisAddress = "localhost:6379";
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = memoryConfiguration.RedisAddress;
+                options.Configuration = redisAddress; // memoryConfiguration.RedisAddress;
             });
 
             services.AddSingleton<IConnectionMultiplexer>(_ =>
             {
-                var redis = memoryConfiguration.RedisAddress;
+                var redis = redisAddress;
                 if (string.IsNullOrWhiteSpace(redis))
                     throw new InvalidOperationException("Missing Redis connection string: Memory:RedisAddress");
 

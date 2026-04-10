@@ -1,4 +1,4 @@
-﻿namespace Vectra.Infrastructure.Configuration.Hitl;
+﻿namespace Vectra.Infrastructure.Configuration.Features.Hitl;
 
 public class HitlConfiguration
 {

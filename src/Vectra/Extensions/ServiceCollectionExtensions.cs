@@ -1,10 +1,12 @@
 ﻿using Microsoft.OpenApi;
 using System.Text.Json.Serialization;
 using Vectra.Application.Abstractions.Versioning;
-using Vectra.Configuration.Database;
-using Vectra.Configuration.Server;
 using Vectra.Exceptions;
-using Vectra.Infrastructure.Persistence.Common;
+using Vectra.Infrastructure.Configuration.Features;
+using Vectra.Infrastructure.Configuration.Observability;
+using Vectra.Infrastructure.Configuration.Security;
+using Vectra.Infrastructure.Configuration.System;
+using Vectra.Infrastructure.Configuration.System.Storage.Database;
 using Vectra.Infrastructure.Persistence.Sqlite;
 using Vectra.Services;
 
@@ -12,6 +14,10 @@ namespace Vectra.Extensions;
 
 public static class ServiceCollectionExtensions
 {
+    private const string SystemConfigurationName = "System";
+    private const string ObservabilityConfigurationName = "Observability";
+    private const string SecurityConfigurationName = "Security";
+    private const string FeaturesConfigurationName = "Features";
     private const string DefaultSqliteProvider = "SQLite";
     private const string DatabaseSectionName = "Databases";
 
@@ -23,17 +29,12 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddVectraServer(this IServiceCollection services)
+    public static IServiceCollection AddVectraConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped(provider =>
-        {
-            var configuration = provider.GetRequiredService<IConfiguration>();
-            var serverConfiguration = configuration.GetSection("Server").Get<ServerConfiguration>()
-                     ?? new ServerConfiguration();
-
-            return serverConfiguration;
-        });
-
+        services.Configure<SystemConfiguration>(configuration.GetSection(SystemConfigurationName));
+        services.Configure<ObservabilityConfiguration>(configuration.GetSection(ObservabilityConfigurationName));
+        services.Configure<SecurityConfiguration>(configuration.GetSection(SecurityConfigurationName));
+        services.Configure<FeaturesConfiguration>(configuration.GetSection(FeaturesConfigurationName));
         return services;
     }
 
@@ -92,9 +93,6 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection ParseVectraArguments(this IServiceCollection services, string[] args)
     {
-        using var scope = services.BuildServiceProvider().CreateScope();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
         var hasStartArgument = args.Contains("--start");
         if (!hasStartArgument)
         {
@@ -139,10 +137,10 @@ public static class ServiceCollectionExtensions
         switch (activeConnection.Provider.ToLowerInvariant())
         {
             //case "postgres":
-            //    services.AddPostgresPersistenceLayer(activeConnection);
+            //    services.AddPostgresPersistenceLayer(activeConnection.ConnectionString);
             //    break;
             case "sqlite":
-                services.AddSqlitePersistenceLayer(activeConnection);
+                services.AddSqlitePersistenceLayer(activeConnection.ConnectionString);
                 break;
             default:
                 throw new InvalidOperationException($"Unsupported database provider '{activeConnection.Provider}'.");

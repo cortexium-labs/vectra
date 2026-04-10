@@ -30,10 +30,10 @@ static void ConfigureServices(WebApplicationBuilder builder, string[] args)
             .SetApplicationName("VectraGateway");
 
     services
+        .AddVectraConfiguration(config)
         .AddInfrastructure(config)
         .AddVectraPersistence(config)
         .AddVectraApiDocumentation()
-        .AddVectraServer()
         .AddVectraProxyForwarder()
         .AddVectraHealthChecker()
         .AddVectraVersion()

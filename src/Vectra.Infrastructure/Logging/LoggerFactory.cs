@@ -1,6 +1,6 @@
 ﻿using Serilog;
 using Serilog.Events;
-using Vectra.Infrastructure.Configuration.Logging;
+using Vectra.Infrastructure.Configuration.Observability.Logging;
 
 namespace Vectra.Infrastructure.Logging;
 

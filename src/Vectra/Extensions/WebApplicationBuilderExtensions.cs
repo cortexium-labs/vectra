@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Options;
 using Serilog;
-using Vectra.Configuration.Server;
+using Vectra.Infrastructure.Configuration.System;
+using Vectra.Infrastructure.Configuration.System.Server;
 
 namespace Vectra.Extensions;
 
@@ -12,9 +14,9 @@ public static class WebApplicationBuilderExtensions
     public static WebApplicationBuilder ConfigureVectraHttpServer(this WebApplicationBuilder builder)
     {
         using var scope = builder.Services.BuildServiceProvider().CreateScope();
-        var serverConfig = scope.ServiceProvider.GetRequiredService<ServerConfiguration>();
+        var serverConfig = scope.ServiceProvider.GetRequiredService<IOptions<SystemConfiguration>>();
 
-        ConfigureKestrelEndpoints(builder, serverConfig);
+        ConfigureKestrelEndpoints(builder, serverConfig.Value.Server);
         ConfigureKestrelSettings(builder);
 
         return builder;

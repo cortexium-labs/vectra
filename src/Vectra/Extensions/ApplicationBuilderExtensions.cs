@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using Vectra.Application.Abstractions.Serializations;
-using Vectra.Configuration.Server;
 using Vectra.HealthCheck;
+using Vectra.Infrastructure.Configuration.System;
 using Vectra.Infrastructure.Persistence.Common;
 using Vectra.Middleware;
 
@@ -92,8 +93,8 @@ public static class ApplicationBuilderExtensions
     public static IApplicationBuilder UseVectraHttps(this IApplicationBuilder app)
     {
         using var scope = app.ApplicationServices.CreateScope();
-        var serverConfiguration = scope.ServiceProvider.GetRequiredService<ServerConfiguration>();
-        if (serverConfiguration.Https?.Enabled == true)
+        var serverConfiguration = scope.ServiceProvider.GetRequiredService<IOptions<SystemConfiguration>>();
+        if (serverConfiguration.Value.Server.Https?.Enabled == true)
             app.UseHttpsRedirection();
         return app;
     }

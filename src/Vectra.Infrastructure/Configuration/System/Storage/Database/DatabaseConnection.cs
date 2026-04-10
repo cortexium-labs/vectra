@@ -1,4 +1,4 @@
-﻿namespace Vectra.Infrastructure.Persistence.Common;
+﻿namespace Vectra.Infrastructure.Configuration.System.Storage.Database;
 
 public class DatabaseConnection
 {
