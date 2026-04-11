@@ -31,6 +31,7 @@ static void ConfigureServices(WebApplicationBuilder builder, string[] args)
 
     services
         .AddVectraConfiguration(config)
+        .AddCache()
         .AddInfrastructure()
         .AddVectraPersistence()
         .AddVectraApiDocumentation()
