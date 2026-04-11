@@ -1,27 +1,24 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
+using Vectra.Application.Abstractions.Caches;
 using Vectra.Application.Abstractions.Executions;
 using Vectra.Domain.Policies;
+using Vectra.Infrastructure.Caches;
 
 namespace Vectra.Infrastructure.Policy;
 
 public class PolicyEngine : IPolicyEngine
 {
-    private readonly IMemoryCache _memoryCache;
-    private readonly IDistributedCache _redisCache;
+    private readonly ICacheProvider _cacheProvider;
     private readonly IPolicyLoader _loader;
     private readonly ILogger<PolicyEngine> _logger;
     private const string CacheKey = "all_policies";
 
     public PolicyEngine(
-        IMemoryCache memoryCache,
-        IDistributedCache redisCache,
+        ICacheService cacheService,
         IPolicyLoader loader,
         ILogger<PolicyEngine> logger)
     {
-        _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
-        _redisCache = redisCache ?? throw new ArgumentNullException(nameof(redisCache));
+        _cacheProvider = cacheService.Current ?? throw new ArgumentNullException(nameof(cacheService));
         _loader = loader ?? throw new ArgumentNullException(nameof(loader));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -59,11 +56,12 @@ public class PolicyEngine : IPolicyEngine
 
     private async Task<Dictionary<Guid, PolicyDefinition>> GetAllPoliciesAsync()
     {
-        if (_memoryCache.TryGetValue(CacheKey, out Dictionary<Guid, PolicyDefinition>? policies) && policies != null)
+        var (success, policies) = await _cacheProvider.TryGetValueAsync<Dictionary<Guid, PolicyDefinition>>(CacheKey);
+        if (success && policies != null)
             return policies;
 
         policies = await _loader.LoadAllAsync();
-        _memoryCache.Set(CacheKey, policies, TimeSpan.FromMinutes(5)); // fallback TTL
+        await _cacheProvider.SetAsync(CacheKey, policies);
         return policies;
     }
 }

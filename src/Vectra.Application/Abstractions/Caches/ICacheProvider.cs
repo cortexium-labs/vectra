@@ -2,6 +2,8 @@
 
 public interface ICacheProvider
 {
-    Task SetAsync(string key, string value);
-    Task<string?> GetAsync(string key);
+    Task<object?> GetAsync(object key);
+    Task<TItem?> GetAsync<TItem>(object key);
+    Task<TItem> SetAsync<TItem>(object key, TItem value);
+    Task<(bool success, TItem? value)> TryGetValueAsync<TItem>(string key);
 }

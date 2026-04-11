@@ -1,19 +1,23 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 using Vectra.Application.Abstractions.Executions;
+using Vectra.BuildingBlocks.Configuration.Features;
+using Vectra.BuildingBlocks.Configuration.Features.Policy;
 using Vectra.Domain.Policies;
 
 namespace Vectra.Infrastructure.Policy;
 
 public class FileSystemPolicyLoader : IPolicyLoader
 {
-    private readonly string _policyDirectory;
+    private readonly PolicyConfiguration _policyConfiguration;
     private readonly ILogger<FileSystemPolicyLoader> _logger;
 
-    public FileSystemPolicyLoader(IConfiguration config, ILogger<FileSystemPolicyLoader> logger)
+    public FileSystemPolicyLoader(
+        IOptions<FeaturesConfiguration> options, 
+        ILogger<FileSystemPolicyLoader> logger)
     {
-        _policyDirectory = config["Policy:Directory"] ?? "policies";
+        _policyConfiguration = options.Value.Policy ?? new PolicyConfiguration();
         _logger = logger;
     }
 
@@ -26,13 +30,19 @@ public class FileSystemPolicyLoader : IPolicyLoader
     public async Task<Dictionary<Guid, PolicyDefinition>> LoadAllAsync(CancellationToken ct)
     {
         var policies = new Dictionary<Guid, PolicyDefinition>();
-        if (!Directory.Exists(_policyDirectory))
+        if (string.IsNullOrEmpty(_policyConfiguration.Directory))
         {
-            _logger.LogWarning("Policy directory {Directory} does not exist", _policyDirectory);
+            _logger.LogWarning("Policy directory is not configured");
             return policies;
         }
 
-        foreach (var file in Directory.GetFiles(_policyDirectory, "*.json"))
+        if (!Directory.Exists(_policyConfiguration.Directory))
+        {
+            _logger.LogWarning("Policy directory {Directory} does not exist", _policyConfiguration.Directory);
+            return policies;
+        }
+
+        foreach (var file in Directory.GetFiles(_policyConfiguration.Directory, "*.json"))
         {
             try
             {
