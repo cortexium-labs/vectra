@@ -41,7 +41,7 @@ public class MemoryCacheProvider : ICacheProvider
     {
         var options = new MemoryCacheEntryOptions
         {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromMilliseconds(_config.TimeToLiveMilliseconds)
+            AbsoluteExpirationRelativeToNow = _config.TimeToLive
         };
         _cache.Set(key, value, options);
         _logger.LogInformation($"InMemory SET {key}");

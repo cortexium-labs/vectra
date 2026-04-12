@@ -13,7 +13,7 @@ public class RedisCacheProvider : ICacheProvider
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<RedisCacheProvider> _logger;
     private readonly IConnectionMultiplexer _redis;
-    private double _ttl = TimeSpan.FromHours(24).TotalMilliseconds;
+    private TimeSpan _ttl = TimeSpan.FromHours(24);
     public RedisCacheProvider(
         RedisCacheConfiguration config, 
         IServiceProvider serviceProvider)
@@ -30,7 +30,7 @@ public class RedisCacheProvider : ICacheProvider
         await db.StringSetAsync(
             $"hitl:{key}", 
             JsonSerializer.Serialize(value), 
-            TimeSpan.FromMilliseconds(_config.TimeToLiveMilliseconds ?? _ttl));
+            _config.TimeToLive ?? _ttl);
 
         _logger.LogInformation($"Redis ({_config.Address}) SET {key}");
     }
@@ -58,7 +58,7 @@ public class RedisCacheProvider : ICacheProvider
         await db.StringSetAsync(
             $"hitl:{key}", 
             serializedValue, 
-            TimeSpan.FromMilliseconds(_config.TimeToLiveMilliseconds ?? _ttl));
+            _config.TimeToLive ?? _ttl);
 
         _logger.LogInformation($"Redis ({_config.Address}) SET {key}");
         return value;

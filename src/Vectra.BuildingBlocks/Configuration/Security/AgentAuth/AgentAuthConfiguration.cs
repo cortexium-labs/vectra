@@ -8,7 +8,7 @@ public class AgentAuthConfiguration
     public string Secret { get; set; } = string.Empty;
     public string Issuer { get; set; } = string.Empty;
     public string Audience { get; set; } = string.Empty;
-    public int ExpirationMinutes { get; set; } = 15;
+    public TimeSpan Expiration { get; set; } = TimeSpan.FromMinutes(15);
 
     // ── External provider settings (Keycloak, Auth0, Azure AD, Custom) ─
     public string Authority { get; set; } = string.Empty;

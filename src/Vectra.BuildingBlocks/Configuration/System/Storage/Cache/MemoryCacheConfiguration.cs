@@ -2,5 +2,5 @@
 
 public class MemoryCacheConfiguration
 {
-    public double TimeToLiveMilliseconds { get; set; } = TimeSpan.FromHours(24).TotalMilliseconds;
+    public TimeSpan? TimeToLive { get; set; } = TimeSpan.FromHours(24);
 }

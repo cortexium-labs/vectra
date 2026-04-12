@@ -117,8 +117,8 @@ public static class DependencyInjection
             var options = ConfigurationOptions.Parse(redisConfig.Address);
             options.AbortOnConnectFail = redisConfig.AbortOnConnectFail ?? false;
             options.ConnectRetry = redisConfig.ConnectRetry ?? 5;
-            options.ConnectTimeout = redisConfig.ConnectTimeout ?? 5000;
-            options.ReconnectRetryPolicy = new ExponentialRetry(redisConfig.ConnectTimeout ?? 5000);
+            options.ConnectTimeout = (int)(redisConfig.ConnectTimeout?.TotalMilliseconds ?? 5000);
+            options.ReconnectRetryPolicy = new ExponentialRetry((int)(redisConfig.ConnectTimeout?.TotalMilliseconds ?? 5000));
             return ConnectionMultiplexer.Connect(options);
         });
 

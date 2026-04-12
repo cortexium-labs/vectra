@@ -35,7 +35,7 @@ public class OpaPolicyEngine : IPolicyProvider
 
         var client = _httpClientFactory.CreateClient(OpaHttpClientName);
         client.BaseAddress = new Uri(opa.BaseUrl, UriKind.Absolute);
-        client.Timeout = TimeSpan.FromMilliseconds(Math.Max(1000, opa.TimeoutMilliseconds));
+        client.Timeout = opa.Timeout ?? TimeSpan.FromSeconds(5);
 
         var body = new
         {
