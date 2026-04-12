@@ -17,7 +17,8 @@ public static class DependencyInjection
     {
         services
             .AddScoped<IAgentRepository, AgentRepository>()
-            .AddScoped<IDatabaseInitializer, SqliteDatabaseInitializer>();
+            .AddScoped<IDatabaseInitializer, SqliteDatabaseInitializer>()
+            .AddScoped<IAgentHistoryRepository, AgentHistoryRepository>();
 
         services.AddPooledDbContextFactory<SqliteApplicationContext>((sp, options) =>
         {
