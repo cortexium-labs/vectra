@@ -28,7 +28,7 @@ internal class AgentsListHandler : IActionHandler<AgentsListRequest, PaginatedRe
             Name = a.Name,
             OwnerId = a.OwnerId,
             Status = a.Status,
-            PolicyId = a.PolicyId
+            PolicyName = a.PolicyName
         }).ToList();
 
         return PaginatedResult<AgentsListResult>.Success(items, request.Page, request.PageSize, totalCount);

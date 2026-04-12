@@ -8,5 +8,5 @@ public class AgentsListResult
     public string Name { get; set; } = string.Empty;
     public string OwnerId { get; set; } = string.Empty;
     public AgentStatus Status { get; set; }
-    public Guid PolicyId { get; set; }
+    public string PolicyName { get; set; } = string.Empty;
 }

@@ -10,5 +10,5 @@ public class AssignPolicyRequest : AssignPolicyRequestModel, IRequest<Result<Abs
 
 public class AssignPolicyRequestModel
 {
-    public required string PolicyId { get; set; }
+    public required string PolicyName { get; set; }
 }

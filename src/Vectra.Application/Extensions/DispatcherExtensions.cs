@@ -36,13 +36,13 @@ public static class DispatcherExtensions
     public static Task<Result<Abstractions.Dispatchers.Void>> AssignPolicyToAgent(
         this IDispatcher dispatcher,
         string agentId,
-        string policyId,
+        string policyName,
         CancellationToken cancellationToken)
     {
         var request = new AssignPolicyRequest
         {
             AgentId = agentId,
-            PolicyId = policyId
+            PolicyName = policyName
         };
         return dispatcher.Dispatch(request, cancellationToken);
     }

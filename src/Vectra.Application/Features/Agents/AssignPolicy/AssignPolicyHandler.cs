@@ -35,16 +35,16 @@ internal class AssignPolicyHandler : IActionHandler<AssignPolicyRequest, Result<
             return Result<Abstractions.Dispatchers.Void>.Failure(error);
         }
 
-        var policyId = Guid.Parse(request.PolicyId);
-        var policy = await _policyLoader.GetPolicyAsync(policyId, cancellationToken);
+        var policyName = request.PolicyName;
+        var policy = await _policyLoader.GetPolicyAsync(policyName, cancellationToken);
         if (policy == null)
         {
-            _logger.LogWarning("Policy with ID {PolicyId} not found.", request.PolicyId);
-            var error = Error.NotFound(ApplicationErrorCodes.PolicyNotFound, $"Policy with ID {request.PolicyId} not found.");
+            _logger.LogWarning("Policy with name {PolicyName} not found.", request.PolicyName);
+            var error = Error.NotFound(ApplicationErrorCodes.PolicyNotFound, $"Policy with name {request.PolicyName} not found.");
             return Result<Abstractions.Dispatchers.Void>.Failure(error);
         }
 
-        agent.PolicyId = policyId;
+        agent.PolicyName = policyName;
         await _agentRepository.UpdateAsync(agent, cancellationToken);
         return Result<Abstractions.Dispatchers.Void>.Success(new Abstractions.Dispatchers.Void());
     }

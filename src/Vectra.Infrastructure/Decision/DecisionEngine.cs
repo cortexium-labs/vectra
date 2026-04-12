@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Vectra.Application.Abstractions.Executions;
+﻿using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Models;
 using Vectra.Domain.Policies;
 
@@ -10,24 +9,19 @@ public class DecisionEngine : IDecisionEngine
     private readonly IPolicyEngine _policyEngine;
     private readonly IRiskScoringService _riskScoring;
     private readonly ISemanticEngine _semanticEngine;
-    private readonly IConfiguration _config;
 
     public DecisionEngine(
         IPolicyEngine policyEngine, 
         IRiskScoringService riskScoring, 
-        ISemanticEngine semanticEngine, 
-        IConfiguration config)
+        ISemanticEngine semanticEngine)
     {
-        _policyEngine = policyEngine;
-        _riskScoring = riskScoring;
-        _semanticEngine = semanticEngine;
-        _config = config;
+        _policyEngine = policyEngine ?? throw new ArgumentNullException(nameof(policyEngine));
+        _riskScoring = riskScoring ?? throw new ArgumentNullException(nameof(riskScoring));
+        _semanticEngine = semanticEngine ?? throw new ArgumentNullException(nameof(semanticEngine));
     }
 
     public async Task<DecisionResult> EvaluateAsync(RequestContext context, CancellationToken ct)
     {
-        var policyId = Guid.Parse(_config["Policy:DefaultPolicyId"]); // store in appsettings
-
         var input = new Dictionary<string, object>
         {
             ["method"] = context.Method,
@@ -40,9 +34,7 @@ public class DecisionEngine : IDecisionEngine
             }
         };
 
-        var data = new Dictionary<string, object>(); // optional external data
-
-        var policyDecision = await _policyEngine.EvaluateAsync(policyId, input, data);
+        var policyDecision = await _policyEngine.EvaluateAsync(context.PolicyName, input);
         if (policyDecision.IsDenied)
             return DecisionResult.Deny(policyDecision.Reason ?? "Policy denied");
         if (policyDecision.IsHitl)

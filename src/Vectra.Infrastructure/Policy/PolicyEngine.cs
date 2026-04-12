@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Data;
 using Vectra.Application.Abstractions.Caches;
 using Vectra.Application.Abstractions.Executions;
 using Vectra.Domain.Policies;
@@ -23,40 +24,50 @@ public class PolicyEngine : IPolicyEngine
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<PolicyDecision> EvaluateAsync(Guid policyId, Dictionary<string, object> input, Dictionary<string, object>? data = null)
+    public async Task<PolicyDecision> EvaluateAsync(string policyName, Dictionary<string, object> input)
     {
-        var policy = await GetPolicyAsync(policyId);
+        var policy = await GetPolicyAsync(policyName);
         if (policy == null)
-            return PolicyDecision.Deny($"Policy {policyId} not found");
+            return PolicyDecision.Deny($"Policy {policyName} not found");
 
-        var applicableRules = new List<PolicyRule>();
         foreach (var rule in policy.Rules.OrderByDescending(r => r.Priority))
         {
-            if (RuleEvaluator.EvaluateRule(rule, input, data))
-                applicableRules.Add(rule);
+            bool matches = true;
+            foreach (var cond in rule.Conditions)
+            {
+                if (!PolicyEvaluator.EvaluateCondition(cond, input))
+                {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches)
+            {
+                return rule.Effect switch
+                {
+                    PolicyType.Allow => PolicyDecision.Allow(rule.Reason ?? "Rule allowed"),
+                    PolicyType.Hitl => PolicyDecision.Hitl(rule.Reason ?? "Rule requires HITL"),
+                    _ => PolicyDecision.Deny(rule.Reason ?? "Rule denied")
+                };
+            }
         }
-
-        var chosen = applicableRules.FirstOrDefault();
-        if (chosen == null)
-            return PolicyDecision.Deny("No matching rule");
-
-        return chosen.Effect switch
+        return policy.Default switch
         {
-            "allow" => PolicyDecision.Allow(chosen.Reason ?? "Rule allowed"),
-            "hitl" => PolicyDecision.Hitl(chosen.Reason ?? "Rule requires HITL"),
-            _ => PolicyDecision.Deny(chosen.Reason ?? "Rule denied")
+            PolicyType.Allow => PolicyDecision.Allow(),
+            PolicyType.Hitl => PolicyDecision.Hitl(),
+            _ => PolicyDecision.Deny()
         };
     }
 
-    public async Task<PolicyDefinition?> GetPolicyAsync(Guid policyId)
+    public async Task<PolicyDefinition?> GetPolicyAsync(string policyName)
     {
         var allPolicies = await GetAllPoliciesAsync();
-        return allPolicies.TryGetValue(policyId, out var policy) ? policy : null;
+        return allPolicies.TryGetValue(policyName, out var policy) ? policy : null;
     }
 
-    private async Task<Dictionary<Guid, PolicyDefinition>> GetAllPoliciesAsync()
+    private async Task<Dictionary<string, PolicyDefinition>> GetAllPoliciesAsync()
     {
-        var (success, policies) = await _cacheProvider.TryGetValueAsync<Dictionary<Guid, PolicyDefinition>>(CacheKey);
+        var (success, policies) = await _cacheProvider.TryGetValueAsync<Dictionary<string, PolicyDefinition>>(CacheKey);
         if (success && policies != null)
             return policies;
 

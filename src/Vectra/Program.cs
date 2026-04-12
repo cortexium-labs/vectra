@@ -3,6 +3,8 @@ using Vectra.Extensions;
 using Vectra.Infrastructure;
 using Vectra.Middleware;
 using Vectra.Application;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,8 +31,15 @@ static void ConfigureServices(WebApplicationBuilder builder, string[] args)
     services.AddDataProtection()
             .SetApplicationName("VectraGateway");
 
+    builder.Services.ConfigureHttpJsonOptions(options =>
+    {
+        options.SerializerOptions.PropertyNameCaseInsensitive = true;
+        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+
     services
         .AddVectraConfiguration(config)
+        .AddJsonSerialization()
         .AddCache()
         .AddInfrastructure()
         .AddVectraPersistence()

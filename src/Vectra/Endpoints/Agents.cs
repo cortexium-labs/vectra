@@ -55,7 +55,7 @@ public class Agents : EndpointGroupBase
         [FromServices] IDispatcher dispatcher,
         CancellationToken cancellationToken)
     {
-        var result = await dispatcher.AssignPolicyToAgent(agentId, request.PolicyId, cancellationToken);
+        var result = await dispatcher.AssignPolicyToAgent(agentId, request.PolicyName, cancellationToken);
         return result.ToHttpResult();
     }
 

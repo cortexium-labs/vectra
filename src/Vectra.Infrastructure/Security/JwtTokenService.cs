@@ -23,7 +23,7 @@ public class JwtTokenService : ITokenService
     {
         if (string.IsNullOrEmpty(_agentAuthConfiguration.Secret))
             throw new InvalidOperationException(
-                "JWT Secret is not configured. Set AgentAuth:Secret in application settings.");
+                "JWT Secret is not configured. Set Security:AgentAuth:Secret in application settings.");
 
         var claims = new[]
         {

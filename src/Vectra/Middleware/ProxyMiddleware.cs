@@ -88,11 +88,12 @@ public class ProxyMiddleware
             Path = targetUri.PathAndQuery,
             Headers = context.Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()),
             AgentId = agentId,
+            PolicyName = agent.PolicyName,
             TrustScore = trustScore,
             Body = await ReadBodyAsync(context.Request)
         };
 
-        var decision = await decisionEngine.EvaluateAsync(requestContext);
+        var decision = await decisionEngine.EvaluateAsync(requestContext, context.RequestAborted);
 
         if (decision.IsDenied)
         {

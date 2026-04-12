@@ -6,10 +6,12 @@ namespace Vectra.Infrastructure.Policy;
 
 public static class PolicyEvaluator
 {
-    public static bool EvaluateCondition(RuleCondition condition, Dictionary<string, object> input, Dictionary<string, object>? data = null)
+    public static bool EvaluateCondition(
+        PolicyRuleCondition condition, 
+        Dictionary<string, object> input)
     {
-        var attributeValue = GetValueFromPath(condition.Attribute, input, data);
-        var expectedValue = DeserializeValue(condition.ValueJson);
+        var attributeValue = GetValueFromPath(condition.Field, input);
+        var expectedValue = DeserializeValue(condition.Value);
         return condition.Operator switch
         {
             "eq" => Equals(attributeValue, expectedValue),
@@ -27,12 +29,10 @@ public static class PolicyEvaluator
         };
     }
 
-    private static object? GetValueFromPath(string path, Dictionary<string, object> input, Dictionary<string, object>? data)
+    private static object? GetValueFromPath(string path, Dictionary<string, object> input)
     {
         if (path.StartsWith("input."))
             return GetNestedValue(path.Substring(6), input);
-        if (path.StartsWith("data.") && data != null)
-            return GetNestedValue(path.Substring(5), data);
         return GetNestedValue(path, input); // fallback to input
     }
 
@@ -67,10 +67,16 @@ public static class PolicyEvaluator
         };
     }
 
-    private static object? DeserializeValue(string? json)
+    private static object? DeserializeValue(object? value)
     {
-        if (string.IsNullOrEmpty(json)) return null;
-        return JsonSerializer.Deserialize<object>(json);
+        if (value is null) return null;
+
+        return value switch
+        {
+            JsonElement je => ConvertJsonElement(je), // already JSON token
+            string s when string.IsNullOrWhiteSpace(s) => null,
+            _ => value // keep plain scalar/object as-is
+        };
     }
 
     private static int Compare(object? a, object? b)
