@@ -1,10 +1,7 @@
 ﻿namespace Vectra.BuildingBlocks.Configuration.Security.AgentAuth;
 
-public enum JwtProviderType
+public enum AgentAuthProviderType
 {
     SelfSigned,
-    Keycloak,
-    Auth0,
-    AzureAd,
-    Custom
+    Jwt
 }

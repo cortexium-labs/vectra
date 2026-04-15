@@ -1,4 +1,4 @@
-namespace Vectra.BuildingBlocks.Configuration.Features.Policy;
+namespace Vectra.BuildingBlocks.Configuration.Policy;
 
 public class OpaPolicyConfiguration
 {

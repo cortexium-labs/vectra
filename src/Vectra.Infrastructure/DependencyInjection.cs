@@ -8,7 +8,7 @@ using Vectra.Application.Abstractions.Dispatchers;
 using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Abstractions.Security;
 using Vectra.Application.Abstractions.Serializations;
-using Vectra.BuildingBlocks.Configuration.Features;
+using Vectra.BuildingBlocks.Configuration.Policy;
 using Vectra.BuildingBlocks.Configuration.System;
 using Vectra.Infrastructure.Caches;
 using Vectra.Infrastructure.Decision;
@@ -43,7 +43,7 @@ public static class DependencyInjection
         services.AddScoped<IRiskScoringService, RiskScoringService>();
 
         // Semantic engine (stub)
-        services.AddScoped<ISemanticEngine, SemanticEngineStub>();
+        services.AddScoped<ISemanticProvider, SemanticEngineStub>();
 
         services.AddMemoryCache();
 
@@ -65,8 +65,8 @@ public static class DependencyInjection
 
     private static IPolicyProvider CreatePolicyProvider(IServiceProvider sp)
     {
-        var features = sp.GetRequiredService<IOptions<FeaturesConfiguration>>().Value;
-        var provider = (features.Policy?.Provider ?? "Internal").Trim();
+        var policyConfiguration = sp.GetRequiredService<IOptions<PolicyConfiguration>>().Value;
+        var provider = (policyConfiguration.DefaultProvider ?? "Internal").Trim();
 
         return provider.ToLowerInvariant() switch
         {
@@ -79,7 +79,7 @@ public static class DependencyInjection
     private static IHitlService CreateHitlService(IServiceProvider sp)
     {
         var systemConfiguration = sp.GetRequiredService<IOptions<SystemConfiguration>>().Value;
-        var provider = systemConfiguration.Storage?.Cache?.Provider;
+        var provider = systemConfiguration.Storage?.Cache?.DefaultProvider;
 
         return string.Equals(provider, "Redis", StringComparison.OrdinalIgnoreCase)
             ? ActivatorUtilities.CreateInstance<RedisHitlService>(sp)
@@ -112,7 +112,7 @@ public static class DependencyInjection
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var config = sp.GetRequiredService<IOptions<SystemConfiguration>>().Value;
-            var redisConfig = config.Storage.Cache.Redis;
+            var redisConfig = config.Storage.Cache.Providers.Redis;
 
             var options = ConfigurationOptions.Parse(redisConfig.Address);
             options.AbortOnConnectFail = redisConfig.AbortOnConnectFail ?? false;

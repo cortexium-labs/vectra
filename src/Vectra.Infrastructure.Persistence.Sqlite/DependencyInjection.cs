@@ -25,7 +25,7 @@ public static class DependencyInjection
             var db = sp.GetRequiredService<IOptions<SystemConfiguration>>()
                        .Value.Storage.Database;
 
-            options.UseSqlite(db.Sqlite.ConnectionString);
+            options.UseSqlite(db.Providers.Sqlite.ConnectionString);
         });
 
         return services;

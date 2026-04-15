@@ -21,9 +21,9 @@ public class JwtTokenService : ITokenService
 
     public string GenerateToken(Agent agent)
     {
-        if (string.IsNullOrEmpty(_agentAuthConfiguration.Secret))
+        if (string.IsNullOrEmpty(_agentAuthConfiguration.SelfSigned.Secret))
             throw new InvalidOperationException(
-                "JWT Secret is not configured. Set Security:AgentAuth:Secret in application settings.");
+                "JWT Secret is not configured. Set Security:AgentAuth:SelfSigned:Secret in application settings.");
 
         var claims = new[]
         {
@@ -33,13 +33,13 @@ public class JwtTokenService : ITokenService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_agentAuthConfiguration.Secret));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_agentAuthConfiguration.SelfSigned.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
-            issuer: _agentAuthConfiguration.Issuer,
-            audience: _agentAuthConfiguration.Audience,
+            issuer: _agentAuthConfiguration.SelfSigned.Issuer,
+            audience: _agentAuthConfiguration.SelfSigned.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.Add(_agentAuthConfiguration.Expiration),
+            expires: DateTime.UtcNow.Add(_agentAuthConfiguration.SelfSigned.Expiration),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
@@ -47,13 +47,12 @@ public class JwtTokenService : ITokenService
 
     public ClaimsPrincipal? ValidateToken(string token)
     {
-        if (string.IsNullOrEmpty(_agentAuthConfiguration.Secret))
-        if (string.IsNullOrEmpty(_agentAuthConfiguration.Secret))
+        if (string.IsNullOrEmpty(_agentAuthConfiguration.SelfSigned.Secret))
             throw new InvalidOperationException(
-                "JWT Secret is not configured. Set AgentAuth:Secret in application settings.");
+                "JWT Secret is not configured. Set Security:AgentAuth:SelfSigned:Secret in application settings.");
 
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(_agentAuthConfiguration.Secret);
+        var key = Encoding.UTF8.GetBytes(_agentAuthConfiguration.SelfSigned.Secret);
         try
         {
             var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
@@ -61,9 +60,9 @@ public class JwtTokenService : ITokenService
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = true,
-                ValidIssuer = _agentAuthConfiguration.Issuer,
+                ValidIssuer = _agentAuthConfiguration.SelfSigned.Issuer,
                 ValidateAudience = true,
-                ValidAudience = _agentAuthConfiguration.Audience,
+                ValidAudience = _agentAuthConfiguration.SelfSigned.Audience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             }, out _);

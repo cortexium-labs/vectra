@@ -3,24 +3,24 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Vectra.Application.Abstractions.Executions;
-using Vectra.BuildingBlocks.Configuration.Features;
+using Vectra.BuildingBlocks.Configuration.Policy;
 
 namespace Vectra.Infrastructure.Policy.Providers;
 
 public class OpaPolicyProvider : IPolicyProvider
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IOptions<FeaturesConfiguration> _features;
+    private readonly IOptions<PolicyConfiguration> _policyConfiguration;
     private readonly ILogger<OpaPolicyProvider> _logger;
     private const string OpaHttpClientName = "opa-policy";
 
     public OpaPolicyProvider(
         IHttpClientFactory httpClientFactory,
-        IOptions<FeaturesConfiguration> features,
+        IOptions<PolicyConfiguration> policyConfiguration,
         ILogger<OpaPolicyProvider> logger)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-        _features = features ?? throw new ArgumentNullException(nameof(features));
+        _policyConfiguration = policyConfiguration ?? throw new ArgumentNullException(nameof(policyConfiguration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -29,7 +29,7 @@ public class OpaPolicyProvider : IPolicyProvider
         Dictionary<string, object> input, 
         CancellationToken cancellationToken)
     {
-        var opa = _features.Value.Policy?.Opa;
+        var opa = _policyConfiguration.Value.Providers.Opa;
         if (opa is null || string.IsNullOrWhiteSpace(opa.BaseUrl))
             return PolicyDecision.Deny("OPA is selected but OPA base URL is not configured");
 

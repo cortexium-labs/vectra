@@ -25,9 +25,9 @@ public sealed class JwtAgentAuthenticator : IAgentAuthenticator
 
         _oidcConfigManager = new Lazy<ConfigurationManager<OpenIdConnectConfiguration>>(() =>
         {
-            var metadataUrl = !string.IsNullOrWhiteSpace(_options.MetadataUrl)
-                ? _options.MetadataUrl
-                : $"{_options.Authority.TrimEnd('/')}/.well-known/openid-configuration";
+            var metadataUrl = !string.IsNullOrWhiteSpace(_options.Jwt.MetadataUrl)
+                ? _options.Jwt.MetadataUrl
+                : $"{_options.Jwt.Authority.TrimEnd('/')}/.well-known/openid-configuration";
 
             return new ConfigurationManager<OpenIdConnectConfiguration>(
                 metadataUrl,
@@ -38,7 +38,7 @@ public sealed class JwtAgentAuthenticator : IAgentAuthenticator
 
     public AgentAuthResult Authenticate(Agent agent)
     {
-        if (_options.Provider != JwtProviderType.SelfSigned)
+        if (_options.Provider != AgentAuthProviderType.SelfSigned)
             return AgentAuthResult.Failure(
                 "Token generation is not supported for external JWT providers. " +
                 "Obtain a token from the configured identity provider.");
@@ -49,7 +49,7 @@ public sealed class JwtAgentAuthenticator : IAgentAuthenticator
 
     public async Task<ClaimsPrincipal?> ValidateAsync(string credential, CancellationToken cancellationToken = default)
     {
-        return _options.Provider == JwtProviderType.SelfSigned
+        return _options.Provider == AgentAuthProviderType.SelfSigned
             ? _selfSignedService.ValidateToken(credential)
             : await ValidateExternalTokenAsync(credential, cancellationToken);
     }
@@ -63,10 +63,10 @@ public sealed class JwtAgentAuthenticator : IAgentAuthenticator
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKeys = oidcConfig.SigningKeys,
-                ValidateIssuer = _options.ValidateIssuer,
-                ValidIssuer = _options.ValidateIssuer ? _options.Authority : null,
-                ValidateAudience = _options.ValidateAudience,
-                ValidAudience = _options.ValidateAudience ? _options.Audience : null,
+                ValidateIssuer = _options.Jwt.ValidateIssuer,
+                ValidIssuer = _options.Jwt.ValidateIssuer ? _options.Jwt.Authority : null,
+                ValidateAudience = _options.Jwt.ValidateAudience,
+                ValidAudience = _options.Jwt.ValidateAudience ? _options.Jwt.Audience : null,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.FromSeconds(30)
             };

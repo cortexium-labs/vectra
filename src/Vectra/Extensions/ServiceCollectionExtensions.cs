@@ -2,9 +2,11 @@
 using Microsoft.OpenApi;
 using System.Text.Json.Serialization;
 using Vectra.Application.Abstractions.Versioning;
-using Vectra.BuildingBlocks.Configuration.Features;
+using Vectra.BuildingBlocks.Configuration.HumanInTheLoop;
 using Vectra.BuildingBlocks.Configuration.Observability;
+using Vectra.BuildingBlocks.Configuration.Policy;
 using Vectra.BuildingBlocks.Configuration.Security;
+using Vectra.BuildingBlocks.Configuration.Semantic;
 using Vectra.BuildingBlocks.Configuration.System;
 using Vectra.Exceptions;
 using Vectra.Infrastructure.Persistence.Sqlite;
@@ -17,7 +19,9 @@ public static class ServiceCollectionExtensions
     private const string SystemConfigurationName = "System";
     private const string ObservabilityConfigurationName = "Observability";
     private const string SecurityConfigurationName = "Security";
-    private const string FeaturesConfigurationName = "Features";
+    private const string SemanticConfigurationName = "Semantic";
+    private const string HumanInTheLoopConfigurationName = "HumanInTheLoop";
+    private const string PolicyConfigurationName = "Policy";
 
     #region Simple registrations
 
@@ -32,7 +36,10 @@ public static class ServiceCollectionExtensions
         services.Configure<SystemConfiguration>(configuration.GetSection(SystemConfigurationName));
         services.Configure<ObservabilityConfiguration>(configuration.GetSection(ObservabilityConfigurationName));
         services.Configure<SecurityConfiguration>(configuration.GetSection(SecurityConfigurationName));
-        services.Configure<FeaturesConfiguration>(configuration.GetSection(FeaturesConfigurationName));
+        services.Configure<SemanticConfiguration>(configuration.GetSection(SemanticConfigurationName));
+        services.Configure<HumanInTheLoopConfiguration>(configuration.GetSection(HumanInTheLoopConfigurationName));
+        services.Configure<PolicyConfiguration>(configuration.GetSection(PolicyConfigurationName));
+
         return services;
     }
 
@@ -122,7 +129,7 @@ public static class ServiceCollectionExtensions
         using var scope = services.BuildServiceProvider().CreateScope();
         var systemConfig = scope.ServiceProvider.GetRequiredService<IOptions<SystemConfiguration>>().Value;
 
-        var provider = systemConfig.Storage.Database.Provider;
+        var provider = systemConfig.Storage.Database.DefaultProvider;
 
         switch (provider?.ToLowerInvariant())
         {

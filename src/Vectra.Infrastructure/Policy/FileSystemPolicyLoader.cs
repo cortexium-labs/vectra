@@ -2,19 +2,19 @@
 using Microsoft.Extensions.Options;
 using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Abstractions.Serializations;
-using Vectra.BuildingBlocks.Configuration.Features;
+using Vectra.BuildingBlocks.Configuration.Policy;
 using Vectra.Domain.Policies;
 
 namespace Vectra.Infrastructure.Policy;
 
 public class FileSystemPolicyLoader : IPolicyLoader
 {
-    private readonly IOptions<FeaturesConfiguration> _options;
+    private readonly IOptions<PolicyConfiguration> _options;
     private readonly ILogger<FileSystemPolicyLoader> _logger;
     private readonly IDeserializer _deserializer;
 
     public FileSystemPolicyLoader(
-        IOptions<FeaturesConfiguration> options, 
+        IOptions<PolicyConfiguration> options, 
         ILogger<FileSystemPolicyLoader> logger,
         IDeserializer deserializer)
     {
@@ -31,7 +31,7 @@ public class FileSystemPolicyLoader : IPolicyLoader
 
     public async Task<Dictionary<string, PolicyDefinition>> LoadAllAsync(CancellationToken ct)
     {
-        var policyConfiguration = _options.Value.Policy.Internal;
+        var policyConfiguration = _options.Value.Providers.Internal;
         var policies = new Dictionary<string, PolicyDefinition>();
         if (string.IsNullOrEmpty(policyConfiguration.Directory))
         {

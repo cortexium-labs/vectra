@@ -25,17 +25,17 @@ public sealed class CacheProviderFactory : ICacheProviderFactory
 
     public ICacheProvider Create()
     {
-        return _config.Provider.ToLowerInvariant() switch
+        return _config.DefaultProvider.ToLowerInvariant() switch
         {
             "redis" => CreateRedis(),
             "memory" => CreateMemory(),
-            _ => throw new NotSupportedException($"Cache provider '{_config.Provider}' is not supported.")
+            _ => throw new NotSupportedException($"Cache provider '{_config.DefaultProvider}' is not supported.")
         };
     }
 
     private ICacheProvider CreateRedis() =>
-        ActivatorUtilities.CreateInstance<RedisCacheProvider>(_serviceProvider, _config.Redis);
+        ActivatorUtilities.CreateInstance<RedisCacheProvider>(_serviceProvider, _config.Providers.Redis);
 
     private ICacheProvider CreateMemory() =>
-        ActivatorUtilities.CreateInstance<MemoryCacheProvider>(_serviceProvider, _config.Memory);
+        ActivatorUtilities.CreateInstance<MemoryCacheProvider>(_serviceProvider, _config.Providers.Memory);
 }
