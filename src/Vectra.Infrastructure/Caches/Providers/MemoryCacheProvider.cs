@@ -54,4 +54,11 @@ public class MemoryCacheProvider : ICacheProvider
         _logger.LogInformation($"InMemory GET {key}");
         return Task.FromResult((result, value));
     }
+
+    public Task RemoveAsync(object key)
+    {
+        _cache.Remove(key);
+        _logger.LogInformation($"InMemory DEL {key}");
+        return Task.CompletedTask;
+    }
 }

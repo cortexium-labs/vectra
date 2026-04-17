@@ -76,4 +76,11 @@ public class RedisCacheProvider : ICacheProvider
         }
         return (false, default);
     }
+
+    public async Task RemoveAsync(object key)
+    {
+        var db = _redis.GetDatabase();
+        await db.KeyDeleteAsync($"hitl:{key}");
+        _logger.LogInformation($"Redis ({_config.Address}) DEL {key}");
+    }
 }
