@@ -6,7 +6,10 @@
   [![Quality Gate Status][sonarcloud-quality-gate-badge]][sonarcloud-quality-gate-url]
   [![License: Apache 2.0][apache-badge]][apache-url]
   [![Build Status][actions-badge]][actions-url]
-  [![FOSSA Status][fossa-badge]][fossa-url]
+  [![FOSSA License Status][fossa-license-badge]][fossa-license-url]
+  [![FOSSA License Status][fossa-license-badge]][fossa-license-url]
+  [![FOSSA Security Status][fossa-security-badge]][fossa-security-url]
+  [![FOSSA Security Status][fossa-security-badge]][fossa-security-url]
   [![Good First Issues][github-good-first-issue-badge]][github-good-first-issue-url]
 </div>
 
@@ -45,5 +48,7 @@ Your support helps others discover the project and drives continued innovation.
 [github-good-first-issue-url]: https://github.com/cortexium-labs/vectra/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 [sonarcloud-quality-gate-badge]: https://sonarcloud.io/api/project_badges/measure?project=cortexium-labs_vectra&metric=alert_status
 [sonarcloud-quality-gate-url]: https://sonarcloud.io/summary/new_code?id=cortexium-labs_vectra
-[fossa-badge]: https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcortexium-labs%2Fvectra.svg?type=shield&issueType=license
-[fossa-url]: https://app.fossa.com/projects/git%2Bgithub.com%2Fcortexium-labs%2Fvectra?ref=badge_shield&issueType=license
+[fossa-license-badge]: https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcortexium-labs%2Fvectra.svg?type=shield&issueType=license
+[fossa-license-url]: https://app.fossa.com/projects/git%2Bgithub.com%2Fcortexium-labs%2Fvectra?ref=badge_shield&issueType=license
+[fossa-security-badge]: https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcortexium-labs%2Fvectra.svg?type=shield&issueType=security
+[fossa-security-url]: https://app.fossa.com/projects/git%2Bgithub.com%2Fcortexium-labs%2Fvectra?ref=badge_shield&issueType=security
