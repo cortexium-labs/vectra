@@ -1,7 +1,9 @@
-﻿using Vectra.Application.Abstractions.Executions;
+﻿using System.Text.Json;
+using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Abstractions.Persistence;
 using Vectra.Application.Models;
 using Vectra.Domain.Agents;
+using Vectra.Infrastructure.Decision;
 using Yarp.ReverseProxy.Forwarder;
 
 namespace Vectra.Middleware;
@@ -154,13 +156,25 @@ public class ProxyMiddleware
 
     private async Task<string?> ReadBodyAsync(HttpRequest request)
     {
-        if (request.ContentLength == null || request.ContentLength == 0)
-            return null;
+        if (request.ContentLength is null or 0) return null;
 
         request.Body.Position = 0;
         using var reader = new StreamReader(request.Body, leaveOpen: true);
         var body = await reader.ReadToEndAsync();
         request.Body.Position = 0;
-        return body;
+
+        var isJson = request.ContentType?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true
+                  || request.ContentType?.Contains("+json", StringComparison.OrdinalIgnoreCase) == true;
+
+        if (!isJson) return body; // keep raw text for semantic/risk analysis
+
+        try
+        {
+            return JsonToIntentText.Convert(body);
+        }
+        catch (JsonException)
+        {
+            return body; // resilient fallback
+        }
     }
 }
