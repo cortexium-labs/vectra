@@ -12,20 +12,35 @@ public class RiskScoreAggregator
         _calculators = calculators;
     }
 
-    public async Task<double> AggregateAsync(RequestContext context, AgentHistory? history, CancellationToken ct)
+    public async Task<double> AggregateAsync(
+        RequestContext context,
+        AgentHistory? history,
+        CancellationToken cancellationToken)
     {
-        var tasks = _calculators.Select(c => c.CalculateAsync(context, history, ct));
+        var calculators = _calculators.ToList();
+
+        var tasks = calculators
+            .Select(c => c.CalculateAsync(context, history, cancellationToken))
+            .ToArray();
+
         var results = await Task.WhenAll(tasks);
+
         double totalWeight = 0;
         double weightedSum = 0;
-        for (int i = 0; i < _calculators.Count(); i++)
+
+        for (int i = 0; i < calculators.Count; i++)
         {
-            var calc = _calculators.ElementAt(i);
+            var calc = calculators[i];
             totalWeight += calc.Weight;
             weightedSum += results[i] * calc.Weight;
         }
-        if (totalWeight == 0) return 0;
+
+        const double epsilon = 1e-9;
+        if (Math.Abs(totalWeight) < epsilon)
+            return 0;
+
         var finalScore = weightedSum / totalWeight;
+
         return Math.Clamp(finalScore, 0, 1);
     }
 }
