@@ -13,7 +13,7 @@ using Vectra.BuildingBlocks.Configuration.System;
 using Vectra.Infrastructure.Caches;
 using Vectra.Infrastructure.Decision;
 using Vectra.Infrastructure.Dispatchers;
-using Vectra.Infrastructure.Hitl;
+using Vectra.Infrastructure.HumanInTheLoop;
 using Vectra.Infrastructure.Policy;
 using Vectra.Infrastructure.Policy.Providers;
 using Vectra.Infrastructure.Risk;
@@ -84,7 +84,7 @@ public static class DependencyInjection
 
         return string.Equals(provider, "Redis", StringComparison.OrdinalIgnoreCase)
             ? ActivatorUtilities.CreateInstance<RedisHitlService>(sp)
-            : ActivatorUtilities.CreateInstance<InMemoryHitlService>(sp);
+            : ActivatorUtilities.CreateInstance<MemoryHitlService>(sp);
     }
 
     public static IServiceCollection AddVectraLogging(this IServiceCollection services)

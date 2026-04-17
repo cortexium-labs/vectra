@@ -1,18 +1,16 @@
-﻿using StackExchange.Redis;
-using System.Text.Json;
-using Vectra.Application.Abstractions.Executions;
+﻿using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Models;
+using Vectra.Infrastructure.Caches;
 
-namespace Vectra.Infrastructure.Hitl;
+namespace Vectra.Infrastructure.HumanInTheLoop;
 
 public class RedisHitlService : IHitlService
 {
-    private readonly IConnectionMultiplexer _redis;
-    private readonly TimeSpan _ttl = TimeSpan.FromHours(24);
+    private readonly ICacheService _cache;
 
-    public RedisHitlService(IConnectionMultiplexer redis)
+    public RedisHitlService(ICacheService cache)
     {
-        _redis = redis;
+        _cache = cache;
     }
 
     public async Task<string> SuspendRequestAsync(RequestContext context, string reason, CancellationToken cancellationToken = default)
@@ -28,36 +26,30 @@ public class RedisHitlService : IHitlService
             Timestamp: DateTime.UtcNow
         );
 
-        var db = _redis.GetDatabase();
-        await db.StringSetAsync($"hitl:{id}", JsonSerializer.Serialize(pending), _ttl);
+        await _cache.Current.SetAsync($"hitl:{id}", pending);
         return id;
     }
 
     public async Task<PendingHitlRequest?> GetPendingAsync(string id, CancellationToken cancellationToken = default)
     {
-        var db = _redis.GetDatabase();
-        var value = await db.StringGetAsync($"hitl:{id}");
-        if (value.IsNullOrEmpty) return null;
-        return JsonSerializer.Deserialize<PendingHitlRequest>(value.ToString());
+        var (found, value) = await _cache.Current.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}");
+        return found ? value : null;
     }
 
     public async Task ApproveAsync(string id, CancellationToken cancellationToken = default)
     {
         // This would resume the request – handled by the gateway middleware.
-        // For now, we just mark it as approved (store in Redis).
-        var db = _redis.GetDatabase();
-        await db.StringSetAsync($"hitl:approved:{id}", "approved", TimeSpan.FromMinutes(5));
+        // For now, we just mark it as approved (store in cache).
+        await _cache.Current.SetAsync($"hitl:approved:{id}", "approved");
     }
 
     public async Task DenyAsync(string id, CancellationToken cancellationToken = default)
     {
-        var db = _redis.GetDatabase();
-        await db.StringSetAsync($"hitl:denied:{id}", "denied", TimeSpan.FromMinutes(5));
+        await _cache.Current.SetAsync($"hitl:denied:{id}", "denied");
     }
 
     public async Task RemoveAsync(string id, CancellationToken cancellationToken = default)
     {
-        var db = _redis.GetDatabase();
-        await db.KeyDeleteAsync($"hitl:{id}");
+        await _cache.Current.RemoveAsync($"hitl:{id}");
     }
 }
