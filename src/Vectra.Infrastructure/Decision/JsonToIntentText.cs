@@ -89,7 +89,7 @@ public static class JsonToIntentText
         if (string.IsNullOrWhiteSpace(key)) return key;
 
         // camelCase → camel case
-        key = Regex.Replace(key, "([a-z])([A-Z])", "$1 $2");
+        key = Regex.Replace(key, "([a-z])([A-Z])", "$1 $2", RegexOptions.None, TimeSpan.FromSeconds(3));
 
         // snake_case → snake case
         key = key.Replace("_", " ");

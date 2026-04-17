@@ -6,8 +6,7 @@ public class BertTokenizer
 {
     private readonly Dictionary<string, int> _vocab;
     private readonly List<string> _tokenStrings;
-    private readonly Regex _whitespaceRegex = new Regex(@"\s+");
-    private readonly Regex _punctuationRegex = new Regex(@"\p{P}");
+    private readonly Regex _whitespaceRegex = new Regex(@"\s+", RegexOptions.None, TimeSpan.FromSeconds(3));
 
     public BertTokenizer(string vocabPath)
     {

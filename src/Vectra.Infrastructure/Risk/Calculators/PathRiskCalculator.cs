@@ -11,13 +11,13 @@ public class PathRiskCalculator : IRiskCalculator
 
     private static readonly List<(Regex Pattern, double Risk)> PathPatterns = new()
     {
-        (new Regex(@"/admin/", RegexOptions.IgnoreCase), 0.8),
-        (new Regex(@"/export|/dump|/bulk", RegexOptions.IgnoreCase), 0.9),
-        (new Regex(@"/delete|/remove|/drop", RegexOptions.IgnoreCase), 0.85),
-        (new Regex(@"/users/all|/users/export", RegexOptions.IgnoreCase), 0.95),
-        (new Regex(@"/config|/settings|/env", RegexOptions.IgnoreCase), 0.7),
-        (new Regex(@"/internal/", RegexOptions.IgnoreCase), 0.6),
-        (new Regex(@"/v[0-9]+/", RegexOptions.IgnoreCase), 0.2)  // versioned API slightly higher
+        (new Regex(@"/admin/", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(3)), 0.8),
+        (new Regex(@"/export|/dump|/bulk", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(3)), 0.9),
+        (new Regex(@"/delete|/remove|/drop", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(3)), 0.85),
+        (new Regex(@"/users/all|/users/export", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(3)), 0.95),
+        (new Regex(@"/config|/settings|/env", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(3)), 0.7),
+        (new Regex(@"/internal/", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(3)), 0.6),
+        (new Regex(@"/v[0-9]+/", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(3)), 0.2)  // versioned API slightly higher
     };
 
     public Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken ct)
