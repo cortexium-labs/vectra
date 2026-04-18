@@ -36,14 +36,13 @@ jobs:
             /d:sonar.exclusions="**/obj/**,**/bin/**"
 
       - name: Build
-        run: dotnet build --configuration Release --no-incremental
+        run: dotnet build --no-incremental
 
       - name: Run Tests with Coverage
         run: |
           dotnet test tests\Vectra.BuildingBlocks.UnitTests\Vectra.BuildingBlocks.UnitTests.csproj `
             --collect:"XPlat Code Coverage" `
             --results-directory ./coverage `
-            --configuration Release --no-build `
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: End SonarCloud Analysis
