@@ -1,14 +1,14 @@
-using Vectra.Application.Abstractions.Executions;
+﻿using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Models;
 using Vectra.Infrastructure.Caches;
 
 namespace Vectra.Infrastructure.HumanInTheLoop;
 
-public class MemoryHitlService : IHitlService
+public class HitlService : IHitlService
 {
     private readonly ICacheService _cache;
 
-    public MemoryHitlService(ICacheService cache)
+    public HitlService(ICacheService cache)
     {
         _cache = cache;
     }

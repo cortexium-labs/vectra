@@ -81,10 +81,7 @@ public static class DependencyInjection
     {
         var systemConfiguration = sp.GetRequiredService<IOptions<SystemConfiguration>>().Value;
         var provider = systemConfiguration.Storage?.Cache?.DefaultProvider;
-
-        return string.Equals(provider, "Redis", StringComparison.OrdinalIgnoreCase)
-            ? ActivatorUtilities.CreateInstance<RedisHitlService>(sp)
-            : ActivatorUtilities.CreateInstance<MemoryHitlService>(sp);
+        return ActivatorUtilities.CreateInstance<HitlService>(sp);
     }
 
     public static IServiceCollection AddVectraLogging(this IServiceCollection services)
