@@ -65,6 +65,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddVectraApiDocumentation(this IServiceCollection services)
     {
+        services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("vectra", new OpenApiInfo
