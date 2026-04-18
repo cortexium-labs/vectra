@@ -39,6 +39,7 @@ static void ConfigureServices(WebApplicationBuilder builder, string[] args)
 
     services
         .AddVectraConfiguration(config)
+        .AddSystemClock()
         .AddJsonSerialization()
         .AddCache()
         .AddInfrastructure()

@@ -2,6 +2,7 @@
 using Microsoft.OpenApi;
 using System.Text.Json.Serialization;
 using Vectra.Application.Abstractions.Versioning;
+using Vectra.BuildingBlocks.Clock;
 using Vectra.BuildingBlocks.Configuration.HumanInTheLoop;
 using Vectra.BuildingBlocks.Configuration.Observability;
 using Vectra.BuildingBlocks.Configuration.Policy;
@@ -25,6 +26,11 @@ public static class ServiceCollectionExtensions
 
     #region Simple registrations
 
+    public static IServiceCollection AddSystemClock(this IServiceCollection services)
+    {
+        services.AddScoped<IClock, SystemClock>();
+        return services;
+    }
     public static IServiceCollection AddVectraVersion(this IServiceCollection services)
     {
         services.AddSingleton<IVersion, VectraVersion>();
