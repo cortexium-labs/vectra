@@ -43,8 +43,8 @@ jobs:
           dotnet test tests\Vectra.BuildingBlocks.UnitTests\Vectra.BuildingBlocks.UnitTests.csproj `
             --collect:"XPlat Code Coverage" `
             --results-directory ./coverage `
+            --configuration Release --no-build `
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-            --configuration Release --no-build
 
       - name: End SonarCloud Analysis
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
