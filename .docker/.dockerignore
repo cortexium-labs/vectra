@@ -1,0 +1,9 @@
+.git
+.vs
+.github
+**/bin
+**/obj
+**/*.user
+**/*.suo
+**/TestResults
+README.md
