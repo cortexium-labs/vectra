@@ -22,6 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
+    env:
+      IMAGE: ${{ inputs.registry }}/${{ inputs.image_name }}
+      VERSION: ${{ inputs.release_version }}
 
     steps:
       - name: Download all digests
@@ -43,9 +46,6 @@ jobs:
 
       - name: Create and push multi-platform manifest
         run: |
-          IMAGE="${{ inputs.registry }}/${{ inputs.image_name }}"
-          VERSION="${{ inputs.release_version }}"
-
           DIGESTS=$(cat /tmp/digests/* | tr '\n' ' ')
           REFS=""
           for d in $DIGESTS; do
