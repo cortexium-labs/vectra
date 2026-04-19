@@ -1,0 +1,69 @@
+name: Reusable – Docker Windows
+
+on:
+  workflow_call:
+    inputs:
+      release_version:
+        required: true
+        type: string
+      registry:
+        required: true
+        type: string
+      image_name:
+        required: true
+        type: string
+
+jobs:
+  docker-windows:
+    strategy:
+      matrix:
+        include:
+          - os: windows-2022
+            dockerfile: .docker/Dockerfile.windows-ltsc2022
+            suffix: ltsc2022
+          - os: windows-2025
+            dockerfile: .docker/Dockerfile.windows-ltsc2025
+            suffix: ltsc2025
+    runs-on: ${{ matrix.os }}
+    permissions:
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ inputs.registry }}/${{ inputs.image_name }}
+
+      - name: Build and push Windows image (${{ matrix.suffix }})
+        id: build_win
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          build-args: APP_VERSION=${{ inputs.release_version }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ inputs.registry }}/${{ inputs.image_name }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Export Windows digest
+        shell: bash
+        run: |
+          mkdir -p /tmp/digests
+          echo "${{ steps.build_win.outputs.digest }}" > /tmp/digests/windows-${{ matrix.suffix }}
+
+      - name: Upload Windows digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-windows-${{ matrix.suffix }}
+          path: /tmp/digests/*
+          if-no-files-found: error

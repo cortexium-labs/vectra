@@ -1,0 +1,61 @@
+name: Reusable – Docker Manifest
+
+on:
+  workflow_call:
+    inputs:
+      release_version:
+        required: true
+        type: string
+      registry:
+        required: true
+        type: string
+      image_name:
+        required: true
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  docker-manifest:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+      - name: Download all digests
+        uses: actions/download-artifact@v4
+        with:
+          pattern: digests-*
+          path: /tmp/digests
+          merge-multiple: true
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create and push multi-platform manifest
+        run: |
+          IMAGE="${{ inputs.registry }}/${{ inputs.image_name }}"
+          VERSION="${{ inputs.release_version }}"
+
+          DIGESTS=$(cat /tmp/digests/* | tr '\n' ' ')
+          REFS=""
+          for d in $DIGESTS; do
+            REFS="$REFS ${IMAGE}@${d}"
+          done
+
+          # Only tag latest for stable releases (no pre-release suffix e.g. -rc.1, -beta.1)
+          TAGS="--tag ${IMAGE}:${VERSION}"
+          if [[ "$VERSION" != *"-"* ]]; then
+            TAGS="$TAGS --tag ${IMAGE}:latest"
+          fi
+
+          docker buildx imagetools create $TAGS $REFS

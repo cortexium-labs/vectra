@@ -1,0 +1,56 @@
+name: Reusable – GitHub Release
+
+on:
+  workflow_call:
+    inputs:
+      release_version:
+        required: true
+        type: string
+      sha:
+        required: true
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_VERSION: ${{ inputs.release_version }}
+      ARTIFACT_DIR: ./release
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: vectra-*
+          path: ${{ env.ARTIFACT_DIR }}
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd "${{ env.ARTIFACT_DIR }}"
+          for file in *; do
+            sha256sum -b "$file" > "$file.sha256"
+          done
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ env.RELEASE_VERSION }}
+          name: Vectra v${{ env.RELEASE_VERSION }}
+          generateReleaseNotes: true
+          artifacts: "${{ env.ARTIFACT_DIR }}/**"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Branch
+        uses: peterjgrainger/action-create-branch@v2.2.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          branch: release-${{ env.RELEASE_VERSION }}
+          sha: ${{ inputs.sha }}

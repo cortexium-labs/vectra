@@ -1,0 +1,83 @@
+name: Reusable – Build binaries
+
+on:
+  workflow_call:
+    inputs:
+      release_version:
+        required: true
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        os_arch: [x64, x86, arm, arm64]
+        include:
+          - os: ubuntu-latest
+            kind: linux
+            title: linux
+          - os: windows-latest
+            kind: win
+            title: windows
+          - os: macos-latest
+            kind: osx
+            title: osx
+        exclude:
+          - os: windows-latest
+            os_arch: arm
+          - os: macos-latest
+            os_arch: arm
+          - os: macos-latest
+            os_arch: x86
+          - os: ubuntu-latest
+            os_arch: x86
+    runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_VERSION: ${{ inputs.release_version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Publish
+        run: |
+          release_name="vectra-${{ matrix.title }}-${{ matrix.os_arch }}"
+          dotnet publish src/Vectra/Vectra.csproj \
+            -p:PublishSingleFile=true \
+            -p:PublishReadyToRun=true \
+            --runtime "${{ matrix.kind }}-${{ matrix.os_arch }}" \
+            -c Release --self-contained true \
+            -p:Version="$RELEASE_VERSION" \
+            -o "${GITHUB_WORKSPACE}/$release_name"
+
+          mkdir -p "${GITHUB_WORKSPACE}/dist"
+          cd "${GITHUB_WORKSPACE}/$release_name"
+
+          if [[ "${{ matrix.kind }}" == "win" ]]; then
+            7z a -tzip "${GITHUB_WORKSPACE}/dist/${release_name}.zip" ./*
+          else
+            tar czvf "${GITHUB_WORKSPACE}/dist/${release_name}.tar.gz" ./*
+          fi
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: vectra-${{ matrix.title }}-${{ matrix.os_arch }}
+          path: ${{ github.workspace }}/dist
