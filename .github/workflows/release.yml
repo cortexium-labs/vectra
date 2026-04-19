@@ -1,4 +1,4 @@
-name: Vectra Release ${{ github.event.inputs.rel_version }}
+name: Vectra Release
 
 on:
   workflow_dispatch:
