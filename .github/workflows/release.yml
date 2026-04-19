@@ -1,0 +1,144 @@
+name: Vectra Release ${{ github.event.inputs.rel_version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      rel_version:
+        description: 'Release version (examples: 1.9.0-rc.1, 1.9.1)'
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.event.inputs.rel_version }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  sanitize_inputs:
+    runs-on: ubuntu-latest
+    outputs:
+      RELEASE_VERSION: ${{ steps.set_version.outputs.RELEASE_VERSION }}
+    steps:
+      - name: Sanitize release version
+        id: set_version
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.rel_version }}
+        run: |
+          # Keep only alphanumeric, dots, hyphens, underscores
+          SAFE_VERSION=$(echo "$INPUT_VERSION" | tr -cd '[:alnum:]._-')
+          echo "RELEASE_VERSION=$SAFE_VERSION" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=$SAFE_VERSION" >> $GITHUB_OUTPUT
+
+  build:
+    needs: sanitize_inputs
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        os_arch: [x64, arm, arm64]
+        include:
+          - os: ubuntu-latest
+            kind: linux
+            title: linux
+          - os: windows-latest
+            kind: win
+            title: windows
+          - os: macos-latest
+            kind: osx
+            title: osx
+        exclude:
+          - os: windows-latest
+            os_arch: arm
+          - os: macos-latest
+            os_arch: arm
+    runs-on: ${{ matrix.os }}
+    env:
+      ARCHIVE_OUTDIR: dist/archives
+      RELEASE_VERSION: ${{ needs.sanitize_inputs.outputs.RELEASE_VERSION }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Publish
+        run: |
+          release_name="vectra-${{ matrix.title }}-${{ matrix.os_arch }}"
+          dotnet publish src/Vectra/Vectra.csproj \
+            -p:PublishSingleFile=true \
+            -p:PublishReadyToRun=true \
+            --runtime "${{ matrix.kind }}-${{ matrix.os_arch }}" \
+            -c Release --self-contained true \
+            -p:Version="$RELEASE_VERSION" \
+            -o "${GITHUB_WORKSPACE}/$release_name"
+
+          mkdir -p "${GITHUB_WORKSPACE}/dist"
+          cd "${GITHUB_WORKSPACE}/$release_name"
+
+          if [[ "${{ matrix.kind }}" == "win" ]]; then
+            7z a -tzip "${GITHUB_WORKSPACE}/dist/${release_name}.zip" ./*
+          else
+            tar czvf "${GITHUB_WORKSPACE}/dist/${release_name}.tar.gz" ./*
+          fi
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: vectra-${{ matrix.title }}-${{ matrix.os_arch }}
+          path: ${{ github.workspace }}/dist
+
+  release:
+    needs: [sanitize_inputs, build]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    env:
+      RELEASE_VERSION: ${{ needs.sanitize_inputs.outputs.RELEASE_VERSION }}
+      ARTIFACT_DIR: ./release
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: vectra-*
+          path: ${{ env.ARTIFACT_DIR }}
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd "${{ env.ARTIFACT_DIR }}"
+          for file in *; do
+            sha256sum -b "$file" > "$file.sha256"
+          done
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ env.RELEASE_VERSION }}
+          name: Vectra v${{ env.RELEASE_VERSION }}
+          generateReleaseNotes: true
+          artifacts: "${{ env.ARTIFACT_DIR }}/**"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Branch
+        uses: peterjgrainger/action-create-branch@v2.2.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          branch: release-${{ env.RELEASE_VERSION }}
+          sha: ${{ github.sha }}
