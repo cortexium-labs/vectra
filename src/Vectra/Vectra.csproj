@@ -10,8 +10,8 @@
 		<Company>Cortexium Labs</Company>
 		<Copyright>© Cortexium Labs. All rights reserved.</Copyright>
 		<Authors>Cortexium Labs</Authors>
-		<RepositoryUrl>https://github.com/cortexium-labs/vectra</RepositoryUrl>
-		<PackageProjectUrl>https://vectra.cortexium-labs.com</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/cortexiumlabs/vectra</RepositoryUrl>
+		<PackageProjectUrl>https://cortexiumlabs.com/vectra</PackageProjectUrl>
 		<RepositoryType>git</RepositoryType>
 		<Description>Intent-Aware Governance Gateway</Description>
 	</PropertyGroup>
