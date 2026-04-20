@@ -10,7 +10,6 @@ namespace Vectra.Infrastructure.Dispatchers;
 public class Dispatcher : IDispatcher
 {
     private readonly IServiceProvider _serviceProvider;
-    private static readonly ConcurrentDictionary<Type, Type> _handlerTypes = new();
     private static readonly ConcurrentDictionary<Type, Delegate> _handlerDelegates = new();
 
     public Dispatcher(IServiceProvider serviceProvider)
