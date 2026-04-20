@@ -26,9 +26,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -38,42 +35,31 @@ jobs:
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-        
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ inputs.registry }}/${{ inputs.image_name }}
 
       - name: Build and push linux/amd64
-        id: build_amd64
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: .docker/Dockerfile.linux
-          platforms: linux/amd64
-          push: true
-          build-args: APP_VERSION=${{ inputs.release_version }}
-          labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=${{ inputs.registry }}/${{ inputs.image_name }},push-by-digest=true,name-canonical=true,push=true
+        run: |
+          IMAGE=${{ inputs.registry }}/${{ inputs.image_name }}
+          docker build \
+            --platform linux/amd64 \
+            --file .docker/Dockerfile.linux \
+            --build-arg APP_VERSION=${{ inputs.release_version }} \
+            --tag ${IMAGE}:amd64-tmp \
+            .
+          docker push ${IMAGE}:amd64-tmp
+          mkdir -p /tmp/digests
+          docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE}:amd64-tmp | awk -F@ '{print $2}' > /tmp/digests/linux-amd64
 
       - name: Build and push linux/arm64
-        id: build_arm64
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: .docker/Dockerfile.linux
-          platforms: linux/arm64
-          push: true
-          build-args: APP_VERSION=${{ inputs.release_version }}
-          labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=${{ inputs.registry }}/${{ inputs.image_name }},push-by-digest=true,name-canonical=true,push=true
-
-      - name: Export linux digests
         run: |
-          mkdir -p /tmp/digests
-          echo "${{ steps.build_amd64.outputs.digest }}" > /tmp/digests/linux-amd64
-          echo "${{ steps.build_arm64.outputs.digest }}" > /tmp/digests/linux-arm64
+          IMAGE=${{ inputs.registry }}/${{ inputs.image_name }}
+          docker build \
+            --platform linux/arm64 \
+            --file .docker/Dockerfile.linux \
+            --build-arg APP_VERSION=${{ inputs.release_version }} \
+            --tag ${IMAGE}:arm64-tmp \
+            .
+          docker push ${IMAGE}:arm64-tmp
+          docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE}:arm64-tmp | awk -F@ '{print $2}' >> /tmp/digests/linux-arm64
 
       - name: Upload linux digests
         uses: actions/upload-artifact@v4

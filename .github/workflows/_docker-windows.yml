@@ -31,9 +31,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -41,28 +38,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ inputs.registry }}/${{ inputs.image_name }}
-
       - name: Build and push Windows image (${{ matrix.suffix }})
-        id: build_win
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          push: true
-          build-args: APP_VERSION=${{ inputs.release_version }}
-          labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=${{ inputs.registry }}/${{ inputs.image_name }},push-by-digest=true,name-canonical=true,push=true
-
-      - name: Export Windows digest
         shell: bash
         run: |
+          IMAGE=${{ inputs.registry }}/${{ inputs.image_name }}
+          docker build \
+            --file ${{ matrix.dockerfile }} \
+            --build-arg APP_VERSION=${{ inputs.release_version }} \
+            --tag ${IMAGE}:windows-${{ matrix.suffix }}-tmp \
+            .
+          docker push ${IMAGE}:windows-${{ matrix.suffix }}-tmp
           mkdir -p /tmp/digests
-          echo "${{ steps.build_win.outputs.digest }}" > /tmp/digests/windows-${{ matrix.suffix }}
+          docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE}:windows-${{ matrix.suffix }}-tmp | awk -F@ '{print $2}' > /tmp/digests/windows-${{ matrix.suffix }}
 
       - name: Upload Windows digest
         uses: actions/upload-artifact@v4
