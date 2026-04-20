@@ -44,7 +44,7 @@ jobs:
           IMAGE=${{ inputs.registry }}/${{ inputs.image_name }}
           docker build \
             --file ${{ matrix.dockerfile }} \
-            --build-arg APP_VERSION=${{ inputs.release_version }} \
+            --build-arg APP_VERSION="${{ inputs.release_version }}" \
             --tag ${IMAGE}:windows-${{ matrix.suffix }}-tmp \
             .
           docker push ${IMAGE}:windows-${{ matrix.suffix }}-tmp

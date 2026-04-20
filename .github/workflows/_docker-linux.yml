@@ -42,7 +42,7 @@ jobs:
           docker build \
             --platform linux/amd64 \
             --file .docker/Dockerfile.linux \
-            --build-arg APP_VERSION=${{ inputs.release_version }} \
+            --build-arg APP_VERSION="${{ inputs.release_version }}" \
             --tag ${IMAGE}:amd64-tmp \
             .
           docker push ${IMAGE}:amd64-tmp
@@ -55,7 +55,7 @@ jobs:
           docker build \
             --platform linux/arm64 \
             --file .docker/Dockerfile.linux \
-            --build-arg APP_VERSION=${{ inputs.release_version }} \
+            --build-arg APP_VERSION="${{ inputs.release_version }}" \
             --tag ${IMAGE}:arm64-tmp \
             .
           docker push ${IMAGE}:arm64-tmp
