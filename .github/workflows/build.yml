@@ -28,8 +28,8 @@ jobs:
       - name: Begin SonarCloud Analysis
         run: |
           dotnet sonarscanner begin `
-            /k:"cortexium-labs_vectra" `
-            /o:"cortexium-labs" `
+            /k:"cortexiumlabs_vectra" `
+            /o:"cortexiumlabs" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="https://sonarcloud.io" `
             /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" `
