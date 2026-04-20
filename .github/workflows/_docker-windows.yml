@@ -48,12 +48,12 @@ jobs:
             --tag ${IMAGE}:windows-${{ matrix.suffix }}-tmp \
             .
           docker push ${IMAGE}:windows-${{ matrix.suffix }}-tmp
-          mkdir -p /tmp/digests
-          docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE}:windows-${{ matrix.suffix }}-tmp | awk -F@ '{print $2}' > /tmp/digests/windows-${{ matrix.suffix }}
+          mkdir -p "${{ runner.temp }}/digests"
+          docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE}:windows-${{ matrix.suffix }}-tmp | awk -F@ '{print $2}' > "${{ runner.temp }}/digests/windows-${{ matrix.suffix }}"
 
       - name: Upload Windows digest
         uses: actions/upload-artifact@v4
         with:
           name: digests-windows-${{ matrix.suffix }}
-          path: /tmp/digests/*
+          path: ${{ runner.temp }}/digests/*
           if-no-files-found: error
