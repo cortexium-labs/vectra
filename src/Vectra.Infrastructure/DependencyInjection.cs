@@ -4,7 +4,6 @@ using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Extensions.Logging;
 using StackExchange.Redis;
-using Vectra.Application.Abstractions.Caches;
 using Vectra.Application.Abstractions.Dispatchers;
 using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Abstractions.Security;
@@ -20,9 +19,11 @@ using Vectra.Infrastructure.Policy.Providers;
 using Vectra.Infrastructure.Risk;
 using Vectra.Infrastructure.Risk.Calculators;
 using Vectra.Infrastructure.Security;
+using Vectra.BuildingBlocks.Configuration.Semantic;
 using Vectra.Infrastructure.Semantic;
-using Vectra.Infrastructure.Semantic.Providers.LocalBert;
+using Vectra.Infrastructure.Semantic.Providers.AzureAi;
 using Vectra.Infrastructure.Serializations.Json;
+using Vectra.Infrastructure.Semantic.Providers.InternalBert;
 
 namespace Vectra.Infrastructure;
 
@@ -45,7 +46,7 @@ public static class DependencyInjection
         services.AddScoped<IRiskScoringService, RiskScoringService>();
 
         // Semantic providers
-        services.AddScoped<ISemanticProvider, LocalOnnxProvider>();
+        services.AddScoped<ISemanticProvider>(CreateSemanticProvider);
 
         services.AddMemoryCache();
 
@@ -63,6 +64,18 @@ public static class DependencyInjection
         services.AddRiskScoring();
 
         return services;
+    }
+
+    private static ISemanticProvider CreateSemanticProvider(IServiceProvider sp)
+    {
+        var semanticConfiguration = sp.GetRequiredService<IOptions<SemanticConfiguration>>().Value;
+        var provider = (semanticConfiguration.DefaultProvider ?? "internal").Trim();
+
+        return provider.ToLowerInvariant() switch
+        {
+            "azureai" => ActivatorUtilities.CreateInstance<AzureAiProvider>(sp),
+            _ => ActivatorUtilities.CreateInstance<InternalOnnxProvider>(sp)
+        };
     }
 
     private static IPolicyProvider CreatePolicyProvider(IServiceProvider sp)

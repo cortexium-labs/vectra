@@ -2,5 +2,6 @@
 
 public class SemanticProviders
 {
-    public LocalOnnxConfiguration Local { get; set; } = new();
+    public InternalOnnxConfiguration Internal { get; set; } = new();
+    public AzureAiConfiguration AzureAi { get; set; } = new();
 }
