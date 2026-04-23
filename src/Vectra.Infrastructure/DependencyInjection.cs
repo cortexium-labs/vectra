@@ -23,6 +23,7 @@ using Vectra.BuildingBlocks.Configuration.Semantic;
 using Vectra.Infrastructure.Semantic;
 using Vectra.Infrastructure.Semantic.Providers.AzureAi;
 using Vectra.Infrastructure.Semantic.Providers.Gemini;
+using Vectra.Infrastructure.Semantic.Providers.Ollama;
 using Vectra.Infrastructure.Semantic.Providers.OpenAi;
 using Vectra.Infrastructure.Serializations.Json;
 using Vectra.Infrastructure.Semantic.Providers.InternalBert;
@@ -78,6 +79,7 @@ public static class DependencyInjection
             "azureai" => ActivatorUtilities.CreateInstance<AzureAiProvider>(sp),
             "openai" => ActivatorUtilities.CreateInstance<OpenAiProvider>(sp),
             "gemini" => ActivatorUtilities.CreateInstance<GeminiProvider>(sp),
+            "ollama" => ActivatorUtilities.CreateInstance<OllamaProvider>(sp),
             _ => ActivatorUtilities.CreateInstance<InternalOnnxProvider>(sp)
         };
     }

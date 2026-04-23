@@ -6,4 +6,5 @@ public class SemanticProviders
     public AzureAiConfiguration AzureAi { get; set; } = new();
     public OpenAiConfiguration OpenAi { get; set; } = new();
     public GeminiConfiguration Gemini { get; set; } = new();
+    public OllamaConfiguration Ollama { get; set; } = new();
 }
