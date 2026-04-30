@@ -7,14 +7,14 @@ public class Hitls : EndpointGroupBase
 {
     public override void Map(WebApplication app)
     {
-        var group = app.MapGroup(this).WithTags("Human-in-the-Loop").RequireAuthorization();
+        var group = app.MapGroup(this).WithTags("Human-in-the-Loop");
 
-        group.MapGet("/pending", GetAllPending)
+        group.MapGet("", GetAllPending)
             .WithName("GetAllPendingHitl")
             .WithSummary("List all pending HITL requests")
             .Produces<IReadOnlyList<PendingHitlRequest>>(StatusCodes.Status200OK);
 
-        group.MapGet("/{id}/status", GetStatus)
+        group.MapGet("/{id}", GetStatus)
             .WithName("GetHitlStatus")
             .WithSummary("Get full status and details of a HITL request")
             .Produces<HitlStatusResponse>(StatusCodes.Status200OK)

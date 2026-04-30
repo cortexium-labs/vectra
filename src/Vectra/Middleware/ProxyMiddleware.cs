@@ -107,6 +107,7 @@ public class ProxyMiddleware
         {
             Method = context.Request.Method,
             Path = targetUri.PathAndQuery,
+            TargetUrl = targetUri.ToString(),
             Headers = context.Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()),
             AgentId = agentId,
             PolicyName = agent.PolicyName,

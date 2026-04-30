@@ -50,7 +50,7 @@ public class HitlService : IHitlService
         var pending = new PendingHitlRequest(
             Id: id,
             Method: context.Method,
-            Url: context.Path,
+            Url: context.TargetUrl,
             Headers: RedactHeaders(context.Headers),
             Body: context.Body,
             Reason: reason,
@@ -167,7 +167,7 @@ public class HitlService : IHitlService
         var upstreamRequest = new HttpRequestMessage
         {
             Method = new HttpMethod(pending.Method),
-            RequestUri = new Uri(pending.Url),
+            RequestUri = new Uri(pending.Url, UriKind.Absolute),
             Content = pending.Body is not null ? new StringContent(pending.Body) : null
         };
 
