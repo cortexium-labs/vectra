@@ -33,19 +33,25 @@ public class FileSystemPolicyLoader : IPolicyLoader
     {
         var policyConfiguration = _options.Value.Providers.Internal;
         var policies = new Dictionary<string, PolicyDefinition>();
-        if (string.IsNullOrEmpty(policyConfiguration.Directory))
+        var configuredPath = policyConfiguration.Directory;
+
+        if (string.IsNullOrEmpty(configuredPath))
         {
             _logger.LogWarning("Policy directory is not configured");
             return policies;
         }
 
-        if (!Directory.Exists(policyConfiguration.Directory))
+        string fullPath = Path.IsPathRooted(configuredPath)
+            ? configuredPath
+            : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
+
+        if (!Directory.Exists(fullPath))
         {
-            _logger.LogWarning("Policy directory {Directory} does not exist", policyConfiguration.Directory);
+            _logger.LogWarning("Policy directory {Directory} does not exist", fullPath);
             return policies;
         }
 
-        foreach (var file in Directory.GetFiles(policyConfiguration.Directory, "*.json"))
+        foreach (var file in Directory.GetFiles(fullPath, "*.json"))
         {
             try
             {
