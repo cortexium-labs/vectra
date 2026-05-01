@@ -18,7 +18,7 @@ public static class WebApplicationBuilderExtensions
 
         builder.WebHost.ConfigureKestrel((context, options) =>
         {
-            ConfigureKestrelLimits(options);
+            ConfigureKestrelLimits(options, serverConfig.Value.Server);
 
             ConfigureKestrelEndpoints(options, serverConfig.Value.Server);
 
@@ -29,15 +29,15 @@ public static class WebApplicationBuilderExtensions
         return builder;
     }
 
-    private static void ConfigureKestrelLimits(KestrelServerOptions options)
+    private static void ConfigureKestrelLimits(KestrelServerOptions options, ServerConfiguration config)
     {
-        options.Limits.MaxConcurrentConnections = 1000;
-        options.Limits.MaxConcurrentUpgradedConnections = 1000;
+        options.Limits.MaxConcurrentConnections = config.MaxConcurrentConnections;
+        options.Limits.MaxConcurrentUpgradedConnections = config.MaxConcurrentUpgradedConnections;
 
-        options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
-        options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
+        options.Limits.KeepAliveTimeout = config.KeepAliveTimeout ?? TimeSpan.FromMinutes(2);
+        options.Limits.RequestHeadersTimeout = config.RequestHeadersTimeout ?? TimeSpan.FromSeconds(30);
 
-        options.Limits.MaxRequestBodySize = 50 * 1024 * 1024; // 50 MB
+        options.Limits.MaxRequestBodySize = (config.MaxRequestBodySizeMb ?? 50) * 1024 * 1024;
     }
 
     private static void ConfigureKestrelEndpoints(
