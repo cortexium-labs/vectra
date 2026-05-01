@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Net.Http;
 using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Abstractions.Persistence;
 using Vectra.Application.Models;
@@ -43,6 +43,16 @@ public class HitlService : IHitlService
 
     public async Task<string> SuspendRequestAsync(RequestContext context, string reason, CancellationToken cancellationToken = default)
     {
+        if (_config.MaxPendingRequests > 0)
+        {
+            var current = await GetAllPendingAsync(cancellationToken);
+            if (current.Count >= _config.MaxPendingRequests)
+            {
+                _logger.LogWarning("HITL request rejected for agent {AgentId}: limit of {Max} concurrent pending requests reached", context.AgentId, _config.MaxPendingRequests);
+                throw new InvalidOperationException($"The maximum number of concurrent pending HITL requests ({_config.MaxPendingRequests}) has been reached.");
+            }
+        }
+
         var id = Guid.NewGuid().ToString();
         var now = _clock.UtcNow;
         var expiresAt = now.AddSeconds(_config.TimeoutSeconds);
@@ -70,6 +80,7 @@ public class HitlService : IHitlService
             id, context.AgentId, reason, expiresAt);
 
         await RecordAuditAsync(id, context.AgentId, context.Method, context.Path, "PENDING_HITL", reason, cancellationToken);
+        await SendWebhookNotificationAsync(pending, cancellationToken);
 
         return id;
     }
@@ -280,6 +291,36 @@ public class HitlService : IHitlService
     {
         var (found, index) = await _cache.Current.TryGetValueAsync<HashSet<string>>("hitl:index");
         return found && index is not null ? index : new HashSet<string>();
+    }
+
+    private async Task SendWebhookNotificationAsync(PendingHitlRequest pending, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(_config.NotificationWebhookUrl))
+            return;
+
+        try
+        {
+            var payload = new
+            {
+                pending.Id,
+                AgentId = pending.AgentId.ToString(),
+                pending.Method,
+                pending.Url,
+                pending.Reason,
+                pending.Timestamp,
+                pending.ExpiresAt
+            };
+
+            var httpClient = _httpClientFactory.CreateClient();
+            var response = await httpClient.PostAsJsonAsync(_config.NotificationWebhookUrl, payload, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+                _logger.LogWarning("HITL webhook notification for request {HitlId} returned {StatusCode}", pending.Id, (int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send HITL webhook notification for request {HitlId}", pending.Id);
+        }
     }
 
     private static Dictionary<string, string> RedactHeaders(Dictionary<string, string> headers)
