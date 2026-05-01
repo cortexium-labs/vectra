@@ -35,7 +35,7 @@ public class AgentAuthMiddleware
             return;
 
         var credential = parts[1];
-        var principal = await authenticator.ValidateAsync(credential, context.RequestAborted);
+        var principal = await authenticator.ValidateAsync(credential, CancellationToken.None);
         if (principal is null)
             return;
 
