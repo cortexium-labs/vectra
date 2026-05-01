@@ -20,4 +20,8 @@
   <Folder Name="/tests/Core/">
     <Project Path="tests/Vectra.Domain.UnitTests/Vectra.Domain.UnitTests.csproj" Id="cf9d8eb1-b870-40fc-a85a-c20fd1b56bfb" />
   </Folder>
+  <Folder Name="/tests/load/">
+    <File Path="tests/Load/README.md" />
+    <File Path="tests/Load/vectra_load_test_without_policy.js" />
+  </Folder>
 </Solution>
