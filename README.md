@@ -104,6 +104,34 @@ To run the full test suite before running:
 dotnet test --configuration Release
 ```
 
+## Security
+
+Security is a first-class concern in VECTRA. We follow responsible disclosure practices and take all reports seriously.
+
+### Reporting a Vulnerability
+
+**Please do not open a public GitHub issue for security vulnerabilities.**
+
+If you discover a security vulnerability, report it privately through one of the following channels:
+
+* **GitHub Private Vulnerability Reporting:** Use the [Report a vulnerability](https://github.com/cortexiumlabs/vectra/security/advisories/new) button in the **Security** tab of the repository.
+* **Email:** Send details to [security@cortexiumlabs.com](mailto:contact@cortexiumlabs.com) with the subject line `[VECTRA] Security Vulnerability`.
+
+Please include:
+- A description of the vulnerability and its potential impact.
+- Steps to reproduce or a proof-of-concept.
+- Any relevant environment details (OS, .NET version, Docker image tag, etc.).
+
+We aim to acknowledge reports within **48 hours** and provide a remediation timeline within **7 days**.
+
+### Security Policy
+
+The full security policy, including supported versions and disclosure process, is available in [SECURITY.md](https://github.com/cortexiumlabs/vectra/blob/main/SECURITY.md).
+
+### Dependency Scanning
+
+VECTRA uses [FOSSA](https://fossa.com) for continuous license and security scanning of all dependencies, and [SonarCloud](https://sonarcloud.io) for static analysis. Badge statuses are shown at the top of this file.
+
 ## Community & Contributing
 
 VECTRA is built in the open and welcomes contributions of all kinds — bug reports, feature requests, documentation improvements, and code.
@@ -111,7 +139,7 @@ VECTRA is built in the open and welcomes contributions of all kinds — bug repo
 ### Ways to Get Involved
 
 * 🐛 **Report a bug** — [Open an issue](https://github.com/cortexiumlabs/vectra/issues/new?template=bug_report.md) with steps to reproduce and expected vs. actual behaviour.
-* 💡 **Request a feature** — [[open a feature request issue](https://github.com/cortexiumlabs/vectra/issues/new?template=feature_request.md).
+* 💡 **Request a feature** — [Open a feature request issue](https://github.com/cortexiumlabs/vectra/issues/new?template=feature_request.md).
 * 🔍 **Pick up a good first issue** — Browse issues labelled [good first issue](https://github.com/cortexiumlabs/vectra/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) for beginner-friendly starting points.
 * 📖 **Improve the docs** — Spotted something unclear or missing? PRs to docs are always welcome.
 
