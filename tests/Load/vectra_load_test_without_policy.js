@@ -206,8 +206,8 @@ export default function (data) {
   const agent      = agents[__VU % agents.length];
   const authHeader = { Authorization: `Bearer ${agent.token}` };
 
-  // Math.random() is intentionally used here for non-security purposes (traffic distribution only).
-  const roll = Math.random(); // nosec
+  // NOSONAR -- Math.random() is intentionally used only for probabilistic traffic distribution in k6 load testing, not for any security-sensitive purpose.
+  const roll = Math.random();
 
   if (roll < 0.70) {
     // 70 % - Proxy a downstream request
