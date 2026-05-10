@@ -39,6 +39,71 @@ As organizations deploy more LLM-driven agents and complex microservices, establ
 * ✅ **Audit & Observability:** Maintains a full audit trail of agent intent classifications, policy decisions, and HITL review outcomes.
 * ✅ **High-Performance Gateway:** Designed for low-latency interception with minimal overhead, keeping your automated workflows fast and responsive.
 
+## Quick Start
+
+### Run via Docker
+
+The fastest way to get VECTRA running is with Docker:
+
+```bash
+docker pull ghcr.io/cortexiumlabs/vectra:latest
+docker run -p 708:7080 ghcr.io/cortexiumlabs/vectra:latest
+```
+
+VECTRA will be available at `http://localhost:7080`.
+
+To supply your own configuration, mount a config file:
+
+```bash
+docker run -p 7080:7080 \
+  -v $(pwd)/vectra.json:/app/vectra.json \
+  ghcr.io/cortexiumlabs/vectra:latest
+```
+
+### Use a Pre-Built Binary
+
+Pre-built binaries for Linux, macOS, and Windows are available on the [Releases](https://github.com/cortexiumlabs/vectra/releases) page.
+
+1. Download the archive for your platform.
+2. Extract and make the binary executable (Linux/macOS):
+
+```bash
+tar -xzf vectra-<version>-linux-x64.tar.gz
+chmod +x vectra
+./vectra
+```
+
+3. On Windows, run the extracted executable directly:
+
+```powershell
+.\vectra.exe
+```
+
+### Build from Source
+
+**Prerequisites:** [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
+
+```bash
+# Clone the repository
+git clone https://github.com/cortexiumlabs/vectra.git
+cd vectra
+
+# Restore dependencies
+dotnet restore
+
+# Build the solution
+dotnet build --configuration Release
+
+# Run the gateway
+dotnet run --project src/Vectra.Gateway --configuration Release
+```
+
+To run the full test suite before running:
+
+```bash
+dotnet test --configuration Release
+```
+
 ## License
 
 Vectra is open-source and licensed under the **Apache 2.0 License**.  
