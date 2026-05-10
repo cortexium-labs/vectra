@@ -8,7 +8,7 @@ integrated throughout our software development and release lifecycle to ensure t
 
 If you identify a potential security issue or vulnerability in Vectra, please **report it privately** to our security team:
 
-📧 **[contact@vectra.cortexiumlabs.com](mailto:contact@vectra.cortexiumlabs.com)**
+📧 **[contact@cortexiumlabs.com](mailto:contact@cortexiumlabs.com)** with the subject line `[VECTRA] Security Vulnerability`
 
 > **Important:** Please **do not** create a public issue or pull request, as this may expose the vulnerability before it is resolved.
 

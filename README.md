@@ -115,7 +115,7 @@ Security is a first-class concern in VECTRA. We follow responsible disclosure pr
 If you discover a security vulnerability, report it privately through one of the following channels:
 
 * **GitHub Private Vulnerability Reporting:** Use the [Report a vulnerability](https://github.com/cortexiumlabs/vectra/security/advisories/new) button in the **Security** tab of the repository.
-* **Email:** Send details to [security@cortexiumlabs.com](mailto:contact@cortexiumlabs.com) with the subject line `[VECTRA] Security Vulnerability`.
+* **Email:** Send details to [contact@cortexiumlabs.com](mailto:contact@cortexiumlabs.com) with the subject line `[VECTRA] Security Vulnerability`.
 
 Please include:
 - A description of the vulnerability and its potential impact.
