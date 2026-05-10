@@ -37,29 +37,37 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Build and push linux/amd64
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          REGISTRY: ${{ inputs.registry }}
+          IMAGE_NAME: ${{ inputs.image_name }}
         run: |
-          IMAGE=${{ inputs.registry }}/${{ inputs.image_name }}
+          IMAGE=${REGISTRY}/${IMAGE_NAME}
           docker build \
             --platform linux/amd64 \
             --file .docker/Dockerfile.linux \
-            --build-arg APP_VERSION="${{ inputs.release_version }}" \
-            --tag ${IMAGE}:${{ inputs.release_version }}-linux-amd64 \
+            --build-arg APP_VERSION="${RELEASE_VERSION}" \
+            --tag ${IMAGE}:${RELEASE_VERSION}-linux-amd64 \
             .
-          docker push ${IMAGE}:${{ inputs.release_version }}-linux-amd64
+          docker push ${IMAGE}:${RELEASE_VERSION}-linux-amd64
           mkdir -p /tmp/digests
-          docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE}:${{ inputs.release_version }}-linux-amd64 | awk -F@ '{print $2}' > /tmp/digests/linux-amd64
+          docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE}:${RELEASE_VERSION}-linux-amd64 | awk -F@ '{print $2}' > /tmp/digests/linux-amd64
 
       - name: Build and push linux/arm64
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          REGISTRY: ${{ inputs.registry }}
+          IMAGE_NAME: ${{ inputs.image_name }}
         run: |
-          IMAGE=${{ inputs.registry }}/${{ inputs.image_name }}
+          IMAGE=${REGISTRY}/${IMAGE_NAME}
           docker build \
             --platform linux/arm64 \
             --file .docker/Dockerfile.linux \
-            --build-arg APP_VERSION="${{ inputs.release_version }}" \
-            --tag ${IMAGE}:${{ inputs.release_version }}-linux-arm64 \
+            --build-arg APP_VERSION="${RELEASE_VERSION}" \
+            --tag ${IMAGE}:${RELEASE_VERSION}-linux-arm64 \
             .
-          docker push ${IMAGE}:${{ inputs.release_version }}-linux-arm64
-          docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE}:${{ inputs.release_version }}-linux-arm64 | awk -F@ '{print $2}' >> /tmp/digests/linux-arm64
+          docker push ${IMAGE}:${RELEASE_VERSION}-linux-arm64
+          docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE}:${RELEASE_VERSION}-linux-arm64 | awk -F@ '{print $2}' >> /tmp/digests/linux-arm64
 
       - name: Upload linux digests
         uses: actions/upload-artifact@v4
