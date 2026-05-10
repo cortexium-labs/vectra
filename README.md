@@ -41,6 +41,22 @@ As organizations deploy more LLM-driven agents and complex microservices, establ
 * ✅ **Audit & Observability:** Maintains a full audit trail of agent intent classifications, policy decisions, and HITL review outcomes.
 * ✅ **High-Performance Gateway:** Designed for low-latency interception with minimal overhead, keeping your automated workflows fast and responsive.
 
+## Architecture
+
+![VECTRA Architecture](/img/architecture.jpg)
+
+Every inbound HTTP request from an AI Agent flows through three layers inside the **Vectra Gateway**:
+
+1. **Request Validation** — checks the API version header, authenticates the caller via JWT, and enforces rate limits. Failures are blocked immediately and recorded in the audit log.
+2. **Decision Engine** — valid requests are evaluated by three sequential steps:
+   - **Policy Evaluation** — applies configured rules and contextual conditions.
+   - **Risk Scoring** — weighs contextual factors including request body, path, anomaly signals, and historical behaviour.
+   - **Semantic Analysis** — classifies the underlying intent of the request.
+3. **Routing outcome** — based on the decision engine result, the request is one of:
+   - ✅ **Direct Allow** → forwarded to the upstream service via the proxy, audit recorded.
+   - ⏳ **Pending Review** → held in the **HITL Review** queue for human approval. Approved requests are proxied; disapproved requests are blocked and audited.
+   - 🚫 **Policy Block** → blocked immediately, audit recorded.
+
 ## Quick Start
 
 ### Run via Docker
