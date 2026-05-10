@@ -15,6 +15,27 @@
   [![Good First Issues][github-good-first-issue-badge]][github-good-first-issue-url]
 </div>
 
+## Table of Contents
+
+- [Overview](#overview-vectra)
+  - [Key Capabilities](#key-capabilities)
+  - [Why VECTRA?](#why-vectra%3F)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+  - [Run via Docker](#run-via-docker)
+  - [Use a Pre-Built Binary](#use-a-pre-built-binary)
+  - [Build from Source](#build-from-source)
+- [Security](#security)
+  - [Reporting a Vulnerability](#reporting-a-vulnerability)
+  - [Security Policy](#security-policy)
+  - [Dependency Scanning](#dependency-scanning)
+- [Community & Contributing](#community-%26-contributing)
+  - [Ways to Get Involved](#ways-to-get-involved)
+  - [Contributing Code](#contributing-code)
+- [License](#license)
+- [Support Vectra](#support-vectra)
+
 ## Overview: VECTRA
 
 > 📖 For full documentation, visit **[docs.cortexium.dev/vectra](https://docs.cortexium.dev/vectra)**.
@@ -30,6 +51,7 @@ While traditional API gateways route traffic based on static endpoints and basic
 * **Precise Agent Governance:** As AI agents become more autonomous, the risk of unintended actions grows. VECTRA provides the fine-grained control necessary to oversee agent behavior, preventing systemic damage and ensuring compliance.
 
 ### Why VECTRA?
+
 As organizations deploy more LLM-driven agents and complex microservices, establishing trust in automated workflows is critical. VECTRA bridges the gap between automation and safety, providing the necessary oversight to let agents act freely while keeping humans firmly in control of critical decisions.
 
 ## Key Features
