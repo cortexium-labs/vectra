@@ -37,20 +37,28 @@ public class PolicyDefinitionTests
     }
 
     [Fact]
-    public void PolicyDefinition_ShouldAddRules()
+    public void PolicyDefinition_ShouldStoreCreatedOn()
     {
-        var policy = new PolicyDefinition
-        {
-            Rules =
-            [
-                new PolicyRule { Name = "AllowGET", Effect = PolicyType.Allow },
-                new PolicyRule { Name = "DenyDELETE", Effect = PolicyType.Deny }
-            ]
-        };
+        var now = DateTime.UtcNow;
+        var policy = new PolicyDefinition { CreatedOn = now };
 
-        policy.Rules.Should().HaveCount(2);
-        policy.Rules.Should().Contain(r => r.Name == "AllowGET");
-        policy.Rules.Should().Contain(r => r.Name == "DenyDELETE");
+        policy.CreatedOn.Should().Be(now);
+    }
+
+    [Fact]
+    public void PolicyDefinition_CreatedOn_ShouldBeNullByDefault()
+    {
+        var policy = new PolicyDefinition();
+
+        policy.CreatedOn.Should().BeNull();
+    }
+
+    [Fact]
+    public void PolicyDefinition_ShouldAllowAllowAsDefaultEffect()
+    {
+        var policy = new PolicyDefinition { Default = PolicyType.Allow };
+
+        policy.Default.Should().Be(PolicyType.Allow);
     }
 }
 

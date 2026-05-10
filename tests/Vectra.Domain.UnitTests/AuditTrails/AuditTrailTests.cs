@@ -51,4 +51,25 @@ public class AuditTrailTests
 
         trail.RiskScore.Should().BeNull();
     }
+
+    [Fact]
+    public void AuditTrail_ShouldAssignId()
+    {
+        var trail = new AuditTrail { Id = 42 };
+
+        trail.Id.Should().Be(42);
+    }
+
+    [Fact]
+    public void AuditTrail_DefaultValues_ShouldBeEmptyStrings()
+    {
+        var trail = new AuditTrail();
+
+        trail.Action.Should().BeEmpty();
+        trail.TargetUrl.Should().BeEmpty();
+        trail.Status.Should().BeEmpty();
+        trail.Intent.Should().BeNull();
+        trail.Reason.Should().BeNull();
+        trail.Timestamp.Should().BeNull();
+    }
 }
