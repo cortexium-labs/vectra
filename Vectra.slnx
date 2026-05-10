@@ -18,6 +18,7 @@
     <Project Path="tests/Vectra.BuildingBlocks.UnitTests/Vectra.BuildingBlocks.UnitTests.csproj" />
   </Folder>
   <Folder Name="/tests/Core/">
+    <Project Path="tests/Vectra.Application.UnitTests/Vectra.Application.UnitTests.csproj" Id="da5eef90-a9f3-44d2-bfb5-664effc22754" />
     <Project Path="tests/Vectra.Domain.UnitTests/Vectra.Domain.UnitTests.csproj" Id="cf9d8eb1-b870-40fc-a85a-c20fd1b56bfb" />
   </Folder>
   <Folder Name="/tests/load/">
