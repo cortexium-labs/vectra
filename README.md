@@ -104,6 +104,30 @@ To run the full test suite before running:
 dotnet test --configuration Release
 ```
 
+## Community & Contributing
+
+VECTRA is built in the open and welcomes contributions of all kinds — bug reports, feature requests, documentation improvements, and code.
+
+### Ways to Get Involved
+
+* 🐛 **Report a bug** — [Open an issue](https://github.com/cortexiumlabs/vectra/issues/new?template=bug_report.md) with steps to reproduce and expected vs. actual behaviour.
+* 💡 **Request a feature** — [[open a feature request issue](https://github.com/cortexiumlabs/vectra/issues/new?template=feature_request.md).
+* 🔍 **Pick up a good first issue** — Browse issues labelled [good first issue](https://github.com/cortexiumlabs/vectra/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) for beginner-friendly starting points.
+* 📖 **Improve the docs** — Spotted something unclear or missing? PRs to docs are always welcome.
+
+### Contributing Code
+
+1. **Fork** the repository and create a feature branch from `main`.
+2. **Write tests** for any new behaviour — the project uses `dotnet test`.
+3. **Follow** the existing code style and conventions in the codebase.
+4. **Open a Pull Request** against `main` with a clear description of what changed and why.
+
+Please read [CONTRIBUTING.md](https://github.com/cortexiumlabs/vectra/blob/main/CONTRIBUTING.md) for the full contribution guidelines, code of conduct, and PR checklist before submitting.
+
+### Community
+
+* 🔔 Watch the repository to stay up to date with releases and RFC discussions.
+
 ## License
 
 Vectra is open-source and licensed under the **Apache 2.0 License**.  
