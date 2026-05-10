@@ -17,7 +17,9 @@
 
 ## Overview: VECTRA
 
-**VECTRA** is an open-source **Intent-Aware Governance Gateway** designed to secure, monitor, and control interactions between autonomous agents, services, and complex systems. 
+> 📖 For full documentation, visit **[docs.cortexium.dev/vectra](https://docs.cortexium.dev/vectra)**.
+
+**VECTRA**
 
 While traditional API gateways route traffic based on static endpoints and basic authentication, VECTRA introduces a semantic layer of security by evaluating the *actual intent* behind every API call. This allows developers to establish dynamic guardrails, ensuring that AI agents and automated systems operate strictly within defined behavioral boundaries.
 
