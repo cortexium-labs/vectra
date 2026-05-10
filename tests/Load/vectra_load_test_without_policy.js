@@ -206,7 +206,8 @@ export default function (data) {
   const agent      = agents[__VU % agents.length];
   const authHeader = { Authorization: `Bearer ${agent.token}` };
 
-  const roll = Math.random();
+  // Math.random() is intentionally used here for non-security purposes (traffic distribution only).
+  const roll = Math.random(); // nosec
 
   if (roll < 0.70) {
     // 70 % - Proxy a downstream request
