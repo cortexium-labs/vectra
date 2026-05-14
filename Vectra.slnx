@@ -24,6 +24,7 @@
   <Folder Name="/tests/Infrastructure/">
     <Project Path="tests/Vectra.Infrastructure.Persistence.Common.UnitTests/Vectra.Infrastructure.Persistence.Common.UnitTests.csproj" Id="89c474c3-2b52-4fc9-99a7-9c778bf47c5e" />
     <Project Path="tests/Vectra.Infrastructure.Persistence.Sqlite.UnitTests/Vectra.Infrastructure.Persistence.Sqlite.UnitTests.csproj" Id="2823896b-6cd9-4920-bf55-d445b45b2116" />
+    <Project Path="tests/Vectra.Infrastructure.UnitTests/Vectra.Infrastructure.UnitTests.csproj" Id="5de204ff-abea-4981-9c5e-3bf8904b73c0" />
   </Folder>
   <Folder Name="/tests/load/">
     <File Path="tests/Load/README.md" />
