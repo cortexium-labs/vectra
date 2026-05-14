@@ -221,6 +221,137 @@ public class DecisionEngineTests
         act.Should().Throw<ArgumentNullException>();
     }
 
+    [Fact]
+    public void Constructor_NullRiskScoring_ThrowsArgumentNullException()
+    {
+        var act = () => new DecisionEngine(
+            Options.Create(new SemanticConfiguration()),
+            Options.Create(new HumanInTheLoopConfiguration()),
+            Options.Create(new PolicyConfiguration()),
+            _policyProvider, null!, _semanticProvider,
+            _history, _audit, _clock, _logger);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Constructor_NullHistory_ThrowsArgumentNullException()
+    {
+        var act = () => new DecisionEngine(
+            Options.Create(new SemanticConfiguration()),
+            Options.Create(new HumanInTheLoopConfiguration()),
+            Options.Create(new PolicyConfiguration()),
+            _policyProvider, _riskScoring, _semanticProvider,
+            null!, _audit, _clock, _logger);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Constructor_NullAudit_ThrowsArgumentNullException()
+    {
+        var act = () => new DecisionEngine(
+            Options.Create(new SemanticConfiguration()),
+            Options.Create(new HumanInTheLoopConfiguration()),
+            Options.Create(new PolicyConfiguration()),
+            _policyProvider, _riskScoring, _semanticProvider,
+            _history, null!, _clock, _logger);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Constructor_NullClock_ThrowsArgumentNullException()
+    {
+        var act = () => new DecisionEngine(
+            Options.Create(new SemanticConfiguration()),
+            Options.Create(new HumanInTheLoopConfiguration()),
+            Options.Create(new PolicyConfiguration()),
+            _policyProvider, _riskScoring, _semanticProvider,
+            _history, _audit, null!, _logger);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Constructor_NullLogger_ThrowsArgumentNullException()
+    {
+        var act = () => new DecisionEngine(
+            Options.Create(new SemanticConfiguration()),
+            Options.Create(new HumanInTheLoopConfiguration()),
+            Options.Create(new PolicyConfiguration()),
+            _policyProvider, _riskScoring, _semanticProvider,
+            _history, _audit, _clock, null!);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task EvaluateAsync_HistoryRecordFails_StillReturnsDecision()
+    {
+        // RecordHistoryAsync has a try/catch — failure should not propagate
+        var sut = CreateSut();
+        SetupAllow();
+        _history.RecordRequestAsync(
+            Arg.Any<Guid>(), Arg.Any<bool>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new InvalidOperationException("DB error")));
+
+        var result = await sut.EvaluateAsync(BuildContext());
+
+        result.IsAllowed.Should().BeTrue("history failure should be swallowed");
+    }
+
+    [Fact]
+    public async Task EvaluateAsync_SemanticEnabled_HighConfidence_AllowsContinuation()
+    {
+        var sut = CreateSut(semanticEnabled: true, semanticConfidenceThreshold: 0.7);
+        _policyProvider.EvaluateAsync(Arg.Any<string>(), Arg.Any<Dictionary<string, object>>(), Arg.Any<CancellationToken>())
+            .Returns(PolicyDecision.Allow());
+        _riskScoring.ComputeRiskScoreAsync(Arg.Any<RequestContext>(), Arg.Any<CancellationToken>())
+            .Returns(0.1);
+        _semanticProvider.AnalyzeAsync(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new SemanticAnalysisResult { Confidence = 0.95 }); // above threshold
+
+        var result = await sut.EvaluateAsync(BuildContext());
+
+        result.IsAllowed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task EvaluateAsync_AllowDecision_RecordsHistoryWithNoViolation()
+    {
+        var sut = CreateSut();
+        SetupAllow();
+        _history.RecordRequestAsync(Arg.Any<Guid>(), Arg.Any<bool>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        await sut.EvaluateAsync(BuildContext());
+
+        await _history.Received(1).RecordRequestAsync(
+            Arg.Any<Guid>(),
+            false, // not a violation
+            Arg.Any<double>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task EvaluateAsync_DenyDecision_RecordsHistoryAsViolation()
+    {
+        var sut = CreateSut();
+        _policyProvider.EvaluateAsync(Arg.Any<string>(), Arg.Any<Dictionary<string, object>>(), Arg.Any<CancellationToken>())
+            .Returns(PolicyDecision.Deny("blocked"));
+        _history.RecordRequestAsync(Arg.Any<Guid>(), Arg.Any<bool>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        await sut.EvaluateAsync(BuildContext());
+
+        await _history.Received(1).RecordRequestAsync(
+            Arg.Any<Guid>(),
+            true, // violation = true
+            Arg.Any<double>(),
+            Arg.Any<CancellationToken>());
+    }
+
     private static RequestContext BuildContext() => new()
     {
         AgentId = Guid.NewGuid(),
@@ -231,3 +362,4 @@ public class DecisionEngineTests
         TrustScore = 0.8
     };
 }
+

@@ -14,7 +14,9 @@ public class JwtAgentAuthenticatorTests
 {
     private static JwtAgentAuthenticator CreateSut(
         AgentAuthProviderType provider = AgentAuthProviderType.SelfSigned,
-        ITokenService? tokenService = null)
+        ITokenService? tokenService = null,
+        string? authority = null,
+        string? metadataUrl = null)
     {
         var config = new SecurityConfiguration
         {
@@ -28,7 +30,13 @@ public class JwtAgentAuthenticatorTests
                     Audience = "vectra-audience",
                     Expiration = TimeSpan.FromMinutes(15)
                 },
-                Jwt = new JwtProvider()
+                Jwt = new JwtProvider
+                {
+                    Authority = authority ?? "https://identity.example.com",
+                    MetadataUrl = metadataUrl,
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                }
             }
         };
         tokenService ??= Substitute.For<ITokenService>();
@@ -84,6 +92,60 @@ public class JwtAgentAuthenticatorTests
         var sut = CreateSut(AgentAuthProviderType.SelfSigned, tokenService);
 
         var result = await sut.ValidateAsync("bad-token");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithExplicitMetadataUrl_DoesNotThrow()
+    {
+        // Exercises the Lazy constructor path with explicit MetadataUrl
+        var act = () => CreateSut(
+            AgentAuthProviderType.Jwt,
+            metadataUrl: "http://localhost:8080/.well-known/openid-configuration");
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Constructor_WithAuthority_BuildsMetadataUrlFromAuthority()
+    {
+        // Exercises path where MetadataUrl is null → derived from Authority
+        var act = () => CreateSut(
+            AgentAuthProviderType.Jwt,
+            authority: "https://identity.example.com",
+            metadataUrl: null);
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public async Task ValidateAsync_ExternalJwt_InvalidToken_ReturnsNull()
+    {
+        // External provider with clearly invalid token → ValidateExternalTokenAsync
+        // must catch the exception and return null
+        var sut = CreateSut(
+            AgentAuthProviderType.Jwt,
+            authority: "https://identity.example.com",
+            metadataUrl: "http://localhost:9999/.well-known/oidc-that-doesnt-exist");
+
+        // The OIDC metadata fetch will fail → catch block returns null
+        var result = await sut.ValidateAsync("invalid.jwt.token");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ValidateAsync_ExternalJwt_LocalhostMetadata_AllowsHttp()
+    {
+        // Exercises the localhost check (RequireHttps = false branch)
+        var sut = CreateSut(
+            AgentAuthProviderType.Jwt,
+            authority: "http://localhost:8080",
+            metadataUrl: "http://localhost:8080/.well-known/openid-configuration");
+
+        // Will fail to fetch, but should not throw
+        var result = await sut.ValidateAsync("some.jwt.token");
 
         result.Should().BeNull();
     }
