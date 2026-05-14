@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Vectra.Application.Abstractions.Persistence;
+﻿using Vectra.Application.Abstractions.Persistence;
 using Vectra.Application.Models;
 using Vectra.Domain.Agents;
 
@@ -16,11 +15,11 @@ public class AgentHistoryCalculator : IRiskCalculator
         _historyRepo = historyRepo;
     }
 
-    public async Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken ct)
+    public async Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken cancellationToken)
     {
         // Use provided history if already loaded (to avoid extra DB call)
         if (history == null)
-            history = await _historyRepo.GetRecentAsync(context.AgentId, TimeSpan.FromMinutes(5), ct);
+            history = await _historyRepo.GetRecentAsync(context.AgentId, TimeSpan.FromMinutes(5), cancellationToken);
         if (history == null) return 0.3; // unknown
 
         double risk = 0.0;

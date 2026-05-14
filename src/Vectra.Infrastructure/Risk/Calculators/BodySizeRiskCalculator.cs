@@ -8,7 +8,7 @@ public class BodySizeRiskCalculator : IRiskCalculator
     public string Name => "body_size";
     public double Weight { get; set; } = 0.1;
 
-    public Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken ct)
+    public Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(context.Body)) return Task.FromResult(0.0);
         var size = context.Body.Length;

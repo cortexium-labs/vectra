@@ -8,7 +8,7 @@ public class TimeBasedCalculator : IRiskCalculator
     public string Name => "time_of_day";
     public double Weight { get; set; } = 0.1;
 
-    public Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken ct)
+    public Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
         var hour = now.Hour;

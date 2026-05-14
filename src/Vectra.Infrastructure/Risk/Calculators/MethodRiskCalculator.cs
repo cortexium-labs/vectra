@@ -21,7 +21,7 @@ public class MethodRiskCalculator : IRiskCalculator
         ["CONNECT"] = 0.8
     };
 
-    public Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken ct)
+    public Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken cancellationToken)
     {
         var risk = MethodRisk.TryGetValue(context.Method, out var value) ? value : 0.5;
         return Task.FromResult(risk);

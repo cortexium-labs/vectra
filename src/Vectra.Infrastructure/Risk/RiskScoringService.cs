@@ -26,7 +26,7 @@ public class RiskScoringService : IRiskScoringService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<double> ComputeRiskScoreAsync(RequestContext context, CancellationToken ct = default)
+    public async Task<double> ComputeRiskScoreAsync(RequestContext context, CancellationToken cancellationToken = default)
     {
         // Build a cache key based on agent ID and request fingerprint
         var cacheKey = $"risk:{context.AgentId}:{context.Method}:{context.Path}:{DateTime.UtcNow:yyyyMMddHHmm}";
@@ -34,8 +34,8 @@ public class RiskScoringService : IRiskScoringService
 
         if (success) return cachedScore;
 
-        var history = await _historyRepo.GetRecentAsync(context.AgentId, TimeSpan.FromMinutes(5), ct);
-        var score = await _aggregator.AggregateAsync(context, history, ct);
+        var history = await _historyRepo.GetRecentAsync(context.AgentId, TimeSpan.FromMinutes(5), cancellationToken);
+        var score = await _aggregator.AggregateAsync(context, history, cancellationToken);
 
         // Cache for a short period (e.g., 10 seconds) to avoid over‑calculation for same agent in burst
         await _cacheProvider.SetAsync(cacheKey, score);

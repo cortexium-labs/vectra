@@ -20,7 +20,7 @@ public class PathRiskCalculator : IRiskCalculator
         (new Regex(@"/v[0-9]+/", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(3)), 0.2)  // versioned API slightly higher
     };
 
-    public Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken ct)
+    public Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken cancellationToken)
     {
         var path = context.Path;
         double maxRisk = 0.1; // default low risk
