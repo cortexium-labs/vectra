@@ -14,7 +14,7 @@ public class DeleteAgentHandlerTests
 
     public DeleteAgentHandlerTests()
     {
-        _sut = new DeleteAgentHandler(_logger, _agentRepository);
+        _sut = new DeleteAgentHandler(_agentRepository);
     }
 
     [Fact]
@@ -49,14 +49,14 @@ public class DeleteAgentHandlerTests
     [Fact]
     public void Constructor_ShouldThrowArgumentNullException_WhenLoggerIsNull()
     {
-        var act = () => new DeleteAgentHandler(null!, _agentRepository);
-        act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
+        var act = () => new DeleteAgentHandler(null!);
+        act.Should().Throw<ArgumentNullException>().WithParameterName("agentRepository");
     }
 
     [Fact]
     public void Constructor_ShouldThrowArgumentNullException_WhenRepositoryIsNull()
     {
-        var act = () => new DeleteAgentHandler(_logger, null!);
+        var act = () => new DeleteAgentHandler(null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("agentRepository");
     }
 }
