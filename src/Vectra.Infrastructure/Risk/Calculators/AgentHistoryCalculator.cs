@@ -11,12 +11,9 @@ public class AgentHistoryCalculator : IRiskCalculator
     public double Weight { get; set; } = 0.35;
 
     private readonly IAgentHistoryRepository _historyRepo;
-    private readonly ILogger<AgentHistoryCalculator> _logger;
-
-    public AgentHistoryCalculator(IAgentHistoryRepository historyRepo, ILogger<AgentHistoryCalculator> logger)
+    public AgentHistoryCalculator(IAgentHistoryRepository historyRepo)
     {
         _historyRepo = historyRepo;
-        _logger = logger;
     }
 
     public async Task<double> CalculateAsync(RequestContext context, AgentHistory? history, CancellationToken ct)
