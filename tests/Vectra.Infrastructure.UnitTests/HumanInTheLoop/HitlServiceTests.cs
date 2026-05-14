@@ -530,6 +530,92 @@ public class HitlServiceTests
         act.Should().Throw<ArgumentNullException>();
     }
 
+    [Fact]
+    public async Task SuspendRequestAsync_BelowMaxPending_DoesNotThrow()
+    {
+        // MaxPending = 3, currently 1 pending → should not throw (tests line 54 "below limit" branch)
+        var existingId = Guid.NewGuid().ToString();
+        _cacheProvider.TryGetValueAsync<HashSet<string>>("hitl:index")
+            .Returns((true, new HashSet<string> { existingId }));
+        var existing = new PendingHitlRequest(existingId, "GET", "https://x.com",
+            new Dictionary<string, string>(), null, "r", Guid.NewGuid(), _now, _now.AddSeconds(300));
+        _cacheProvider.TryGetValueAsync<PendingHitlRequest>($"hitl:{existingId}")
+            .Returns((true, existing));
+        _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<PendingHitlRequest>())
+            .Returns(x => Task.FromResult(x.Arg<PendingHitlRequest>()));
+        _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>())
+            .Returns(Task.FromResult<HashSet<string>>(null!));
+
+        var sut = CreateSut(maxPending: 3);
+
+        var act = async () => await sut.SuspendRequestAsync(BuildContext(), "test");
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task ReplayAsync_WithContentTypeHeader_SetsContentHeader()
+    {
+        // Exercises line 188 - Content-Type header goes to content headers
+        var sut = CreateSut();
+        var id = "ct-test";
+
+        _cacheProvider.TryGetValueAsync<HitlDecision>($"hitl:decision:{id}")
+            .Returns((true, new HitlDecision(id, HitlRequestStatus.Approved, "rev", null, _now)));
+
+        var pending = new PendingHitlRequest(id, "POST", "https://upstream.local/api",
+            new Dictionary<string, string> { ["Content-Type"] = "application/json" },
+            """{"x":1}""", "reason", Guid.NewGuid(), _now, _now.AddSeconds(300));
+        _cacheProvider.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}")
+            .Returns((true, pending));
+
+        var handler = new FakeHttpMessageHandler(HttpStatusCode.OK, "{}");
+        _httpClientFactory.CreateClient().Returns(new HttpClient(handler));
+        _cacheProvider.RemoveAsync(Arg.Any<string>()).Returns(Task.CompletedTask);
+        _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>())
+            .Returns(Task.FromResult<HashSet<string>>(null!));
+
+        var result = await sut.ReplayAsync(id);
+
+        result.Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SuspendRequestAsync_AuditFails_DoesNotThrow()
+    {
+        // Exercises lines 276-279: audit fail is swallowed
+        _audit.AddAsync(Arg.Any<AuditTrail>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new InvalidOperationException("DB down")));
+        _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<PendingHitlRequest>())
+            .Returns(x => Task.FromResult(x.Arg<PendingHitlRequest>()));
+        _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>())
+            .Returns(Task.FromResult<HashSet<string>>(null!));
+
+        var sut = CreateSut();
+
+        var act = async () => await sut.SuspendRequestAsync(BuildContext(), "test");
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task SuspendRequestAsync_WebhookThrowsException_DoesNotThrow()
+    {
+        // Exercises lines 320-323: webhook exception is swallowed
+        var handler = new ThrowingHttpMessageHandler();
+        _httpClientFactory.CreateClient().Returns(new HttpClient(handler));
+
+        var sut = CreateSut(webhookUrl: "https://webhook.example.com/notify");
+        _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<PendingHitlRequest>())
+            .Returns(x => Task.FromResult(x.Arg<PendingHitlRequest>()));
+        _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>())
+            .Returns(Task.FromResult<HashSet<string>>(null!));
+
+        var act = async () => await sut.SuspendRequestAsync(BuildContext(), "test");
+
+        await act.Should().NotThrowAsync();
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private sealed class FakeHttpMessageHandler(HttpStatusCode statusCode, string content) : HttpMessageHandler
@@ -552,6 +638,13 @@ public class HitlServiceTests
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
             => throw new HttpRequestException("upstream unreachable");
+    }
+
+    private sealed class ThrowingHttpMessageHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+            => throw new TaskCanceledException("timeout");
     }
 }
 

@@ -1,4 +1,5 @@
 using FluentAssertions;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Vectra.Application.Abstractions.Dispatchers;
 using Vectra.Infrastructure.Dispatchers;
@@ -9,6 +10,7 @@ public class DispatcherTests
 {
     private sealed record TestQuery(string Value) : IAction<string>;
     private sealed record TestIntQuery(int Value) : IAction<int>;
+    private sealed record ValidatedQuery(string Value) : IAction<string>;
 
     private sealed class TestQueryHandler : IActionHandler<TestQuery, string>
     {
@@ -20,6 +22,20 @@ public class DispatcherTests
     {
         public Task<int> Handle(TestIntQuery action, CancellationToken cancellationToken = default)
             => Task.FromResult(action.Value * 2);
+    }
+
+    private sealed class ValidatedQueryHandler : IActionHandler<ValidatedQuery, string>
+    {
+        public Task<string> Handle(ValidatedQuery action, CancellationToken cancellationToken = default)
+            => Task.FromResult($"validated:{action.Value}");
+    }
+
+    private sealed class ValidatedQueryValidator : AbstractValidator<ValidatedQuery>
+    {
+        public ValidatedQueryValidator()
+        {
+            RuleFor(x => x.Value).NotEmpty().WithMessage("Value cannot be empty");
+        }
     }
 
     private static Dispatcher BuildDispatcher(Action<IServiceCollection>? configure = null)
@@ -90,5 +106,35 @@ public class DispatcherTests
         var act = () => new Dispatcher(null!);
 
         act.Should().NotThrow();
+    }
+
+    [Fact]
+    public async Task Dispatch_ValidatorPasses_ExecutesHandler()
+    {
+        var sut = BuildDispatcher(s =>
+        {
+            s.AddScoped<IActionHandler<ValidatedQuery, string>, ValidatedQueryHandler>();
+            s.AddScoped<IValidator<ValidatedQuery>, ValidatedQueryValidator>();
+        });
+
+        var result = await sut.Dispatch(new ValidatedQuery("ok-value"));
+
+        result.Should().Be("validated:ok-value");
+    }
+
+    [Fact]
+    public async Task Dispatch_ValidatorFails_ThrowsValidationException()
+    {
+        var sut = BuildDispatcher(s =>
+        {
+            s.AddScoped<IActionHandler<ValidatedQuery, string>, ValidatedQueryHandler>();
+            s.AddScoped<IValidator<ValidatedQuery>, ValidatedQueryValidator>();
+        });
+
+        // Empty value fails the NotEmpty rule
+        var act = async () => await sut.Dispatch(new ValidatedQuery(string.Empty));
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("*Value cannot be empty*");
     }
 }

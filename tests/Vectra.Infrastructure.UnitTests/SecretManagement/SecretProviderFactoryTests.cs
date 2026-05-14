@@ -69,6 +69,17 @@ public class SecretProviderFactoryTests
     }
 
     [Fact]
+    public void Create_AzureKeyVault_ReturnsProvider()
+    {
+        var sut = CreateSut(SecretManagementProviderType.AzureKeyVault);
+
+        // AzureKeyVaultSecretProvider is constructed successfully (Configure is not called here)
+        var result = sut.Create();
+
+        result.Should().NotBeNull();
+    }
+
+    [Fact]
     public void Constructor_NullServiceProvider_ThrowsArgumentNullException()
     {
         var config = new SecretManagementConfiguration();

@@ -38,6 +38,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<InternalsVisibleTo Include="Vectra.Infrastructure.UnitTests" />
+	</ItemGroup>
+	
+	<ItemGroup>
 		<ProjectReference Include="..\Vectra.Application\Vectra.Application.csproj" />
 	</ItemGroup>
 

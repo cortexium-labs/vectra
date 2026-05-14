@@ -68,4 +68,28 @@ public class CacheProviderFactoryTests
 
         act.Should().Throw<ArgumentNullException>();
     }
+
+    [Fact]
+    public void Create_RedisProvider_ReturnsRedisCacheProvider()
+    {
+        // Set up a service provider with a mock IConnectionMultiplexer
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton(NSubstitute.Substitute.For<StackExchange.Redis.IConnectionMultiplexer>());
+        var sp = services.BuildServiceProvider();
+
+        var config = new SystemConfiguration();
+        config.Storage.Cache.DefaultProvider = "redis";
+        config.Storage.Cache.Providers.Redis = new Vectra.BuildingBlocks.Configuration.System.Storage.Cache.RedisCacheConfiguration
+        {
+            Address = "localhost:6379"
+        };
+
+        var sut = new CacheProviderFactory(Options.Create(config), sp);
+
+        var provider = sut.Create();
+
+        provider.Should().NotBeNull();
+        provider.Should().BeOfType<Vectra.Infrastructure.Caches.Providers.RedisCacheProvider>();
+    }
 }

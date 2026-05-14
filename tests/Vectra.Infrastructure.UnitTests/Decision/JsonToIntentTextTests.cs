@@ -132,4 +132,71 @@ public class JsonToIntentTextTests
 
         result.Should().Contain("delete");
     }
+
+    [Fact]
+    public void Convert_ArrayWithObjectItems_FallsBackToDeepProcessing()
+    {
+        // Items are objects (not simple values), so they fall through to ProcessElement recursion
+        var json = "{\"items\":[{\"name\":\"admin\"},{\"name\":\"user\"}]}";
+
+        var result = JsonToIntentText.Convert(json);
+
+        result.Should().Contain("name");
+        result.Should().Contain("admin");
+    }
+
+    [Fact]
+    public void Convert_ArrayWithNoPrefixAtTopLevel_DoesNotThrow()
+    {
+        // Top-level array with no prefix set
+        var json = "[\"a\",\"b\",\"c\"]";
+
+        var act = () => JsonToIntentText.Convert(json);
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Convert_StringValueWithContent_IsLowercased()
+    {
+        // NormalizeValue lowercases non-empty strings; only null/empty are filtered
+        var json = "{\"method\":\"DELETE\"}";
+
+        var result = JsonToIntentText.Convert(json);
+
+        result.Should().Contain("method");
+        result.Should().Contain("delete");
+    }
+
+    [Fact]
+    public void Convert_BoolFalseValue_IsIncluded()
+    {
+        var json = "{\"enabled\":false}";
+
+        var result = JsonToIntentText.Convert(json);
+
+        result.Should().Contain("false");
+    }
+
+    [Fact]
+    public void Convert_NullValue_IsNotAppended()
+    {
+        var json = "{\"reason\":null}";
+
+        var result = JsonToIntentText.Convert(json);
+
+        result.Trim().Should().NotContain("reason");
+    }
+
+    [Fact]
+    public void Convert_DeepNestedNoise_IsFiltered()
+    {
+        var json = "{\"data\":{\"id\":\"123\",\"role\":\"admin\"}}";
+
+        var result = JsonToIntentText.Convert(json);
+
+        result.Should().NotContain("123");
+        result.Should().Contain("admin");
+    }
 }
+
