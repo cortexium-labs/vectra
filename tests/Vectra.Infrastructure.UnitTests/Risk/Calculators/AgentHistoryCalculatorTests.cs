@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Vectra.Application.Abstractions.Persistence;
 using Vectra.Application.Models;
@@ -11,12 +10,11 @@ namespace Vectra.Infrastructure.UnitTests.Risk.Calculators;
 public class AgentHistoryCalculatorTests
 {
     private readonly IAgentHistoryRepository _historyRepo = Substitute.For<IAgentHistoryRepository>();
-    private readonly ILogger<AgentHistoryCalculator> _logger = Substitute.For<ILogger<AgentHistoryCalculator>>();
     private readonly AgentHistoryCalculator _sut;
 
     public AgentHistoryCalculatorTests()
     {
-        _sut = new AgentHistoryCalculator(_historyRepo, _logger);
+        _sut = new AgentHistoryCalculator(_historyRepo);
     }
 
     [Fact]
