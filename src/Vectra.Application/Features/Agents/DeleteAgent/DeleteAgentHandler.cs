@@ -14,7 +14,7 @@ internal class DeleteAgentHandler : IActionHandler<DeleteAgentRequest, Result<Vo
         _agentRepository = agentRepository ?? throw new ArgumentNullException(nameof(agentRepository));
     }
 
-    public async Task<Result<Void>> Handle(DeleteAgentRequest request, CancellationToken cancellationToken)
+    public async Task<Result<Void>> Handle(DeleteAgentRequest request, CancellationToken cancellationToken = default)
     {
         var agentId = Guid.Parse(request.AgentId);
         await _agentRepository.DeleteAsync(agentId, cancellationToken);
