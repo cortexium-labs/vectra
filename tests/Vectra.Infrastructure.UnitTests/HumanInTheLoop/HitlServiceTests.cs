@@ -68,7 +68,7 @@ public class HitlServiceTests
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<PendingHitlRequest>()).Returns(Task.FromResult<PendingHitlRequest>(null!));
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>()).Returns(Task.FromResult<HashSet<string>>(null!));
 
-        var id = await sut.SuspendRequestAsync(BuildContext(), "needs review");
+        var id = await sut.SuspendRequestAsync(BuildContext(), "needs review", TestContext.Current.CancellationToken);
 
         id.Should().NotBeNullOrWhiteSpace();
         await _cacheProvider.Received().SetAsync(
@@ -90,7 +90,7 @@ public class HitlServiceTests
         ctx.Headers["X-Api-Key"] = "secret-key";
         ctx.Headers["Accept"] = "application/json";
 
-        await sut.SuspendRequestAsync(ctx, "test");
+        await sut.SuspendRequestAsync(ctx, "test", TestContext.Current.CancellationToken);
 
         stored.Should().NotBeNull();
         stored!.Headers["Authorization"].Should().Be("[REDACTED]");
@@ -107,7 +107,7 @@ public class HitlServiceTests
             .Returns(x => Task.FromResult<PendingHitlRequest>(x.Arg<PendingHitlRequest>()));
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>()).Returns(Task.FromResult<HashSet<string>>(null!));
 
-        await sut.SuspendRequestAsync(BuildContext(), "test");
+        await sut.SuspendRequestAsync(BuildContext(), "test", TestContext.Current.CancellationToken);
 
         stored!.ExpiresAt.Should().Be(_now.AddSeconds(600));
     }
@@ -180,7 +180,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}")
             .Returns((true, request));
 
-        var result = await sut.GetPendingAsync(id);
+        var result = await sut.GetPendingAsync(id, TestContext.Current.CancellationToken);
 
         result.Should().Be(request);
     }
@@ -192,7 +192,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<PendingHitlRequest>(Arg.Any<string>())
             .Returns((false, null));
 
-        var result = await sut.GetPendingAsync("missing-id");
+        var result = await sut.GetPendingAsync("missing-id", TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
     }
@@ -210,7 +210,7 @@ public class HitlServiceTests
         _cacheProvider.RemoveAsync(Arg.Any<string>()).Returns(Task.CompletedTask);
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>()).Returns(Task.FromResult<HashSet<string>>(null!));
 
-        var result = await sut.GetPendingAsync(id);
+        var result = await sut.GetPendingAsync(id, TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
         await _cacheProvider.Received().RemoveAsync($"hitl:{id}");
@@ -227,7 +227,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<HitlDecision>($"hitl:decision:{id}")
             .Returns((true, decision));
 
-        var result = await sut.GetStatusAsync(id);
+        var result = await sut.GetStatusAsync(id, TestContext.Current.CancellationToken);
 
         result.Should().Be(HitlRequestStatus.Approved);
     }
@@ -242,7 +242,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}")
             .Returns((false, null));
 
-        var result = await sut.GetStatusAsync(id);
+        var result = await sut.GetStatusAsync(id, TestContext.Current.CancellationToken);
 
         result.Should().Be(HitlRequestStatus.NotFound);
     }
@@ -262,7 +262,7 @@ public class HitlServiceTests
         _cacheProvider.RemoveAsync(Arg.Any<string>()).Returns(Task.CompletedTask);
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>()).Returns(Task.FromResult<HashSet<string>>(null!));
 
-        var result = await sut.GetStatusAsync(id);
+        var result = await sut.GetStatusAsync(id, TestContext.Current.CancellationToken);
 
         result.Should().Be(HitlRequestStatus.Expired);
     }
@@ -280,7 +280,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}")
             .Returns((true, request));
 
-        var result = await sut.GetStatusAsync(id);
+        var result = await sut.GetStatusAsync(id, TestContext.Current.CancellationToken);
 
         result.Should().Be(HitlRequestStatus.Pending);
     }
@@ -294,7 +294,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<HashSet<string>>("hitl:index")
             .Returns((false, null));
 
-        var result = await sut.GetAllPendingAsync();
+        var result = await sut.GetAllPendingAsync(TestContext.Current.CancellationToken);
 
         result.Should().BeEmpty();
     }
@@ -316,7 +316,7 @@ public class HitlServiceTests
         _cacheProvider.RemoveAsync(Arg.Any<string>()).Returns(Task.CompletedTask);
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>()).Returns(Task.FromResult<HashSet<string>>(null!));
 
-        var result = await sut.GetAllPendingAsync();
+        var result = await sut.GetAllPendingAsync(TestContext.Current.CancellationToken);
 
         result.Should().HaveCount(1);
         result[0].Id.Should().Be(id1);
@@ -333,7 +333,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}")
             .Returns((false, null));
 
-        await sut.ApproveAsync(id, "reviewer-1", "looks fine");
+        await sut.ApproveAsync(id, "reviewer-1", "looks fine", TestContext.Current.CancellationToken);
 
         await _cacheProvider.Received().SetAsync(
             $"hitl:decision:{id}",
@@ -349,7 +349,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}")
             .Returns((false, null));
 
-        await sut.DenyAsync(id, "reviewer-2", "too risky");
+        await sut.DenyAsync(id, "reviewer-2", "too risky", TestContext.Current.CancellationToken);
 
         await _cacheProvider.Received().SetAsync(
             $"hitl:decision:{id}",
@@ -366,7 +366,7 @@ public class HitlServiceTests
         _cacheProvider.RemoveAsync(Arg.Any<string>()).Returns(Task.CompletedTask);
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>()).Returns(Task.FromResult<HashSet<string>>(null!));
 
-        await sut.RemoveAsync(id);
+        await sut.RemoveAsync(id, TestContext.Current.CancellationToken);
 
         await _cacheProvider.Received().RemoveAsync($"hitl:{id}");
     }
@@ -383,7 +383,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}")
             .Returns((false, null));
 
-        var result = await sut.ReplayAsync(id);
+        var result = await sut.ReplayAsync(id, TestContext.Current.CancellationToken);
 
         result.Success.Should().BeFalse();
         result.ErrorReason.Should().Contain("not found");
@@ -397,7 +397,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<HitlDecision>($"hitl:decision:{id}")
             .Returns((true, new HitlDecision(id, HitlRequestStatus.Denied, "rev", null, _now)));
 
-        var result = await sut.ReplayAsync(id);
+        var result = await sut.ReplayAsync(id, TestContext.Current.CancellationToken);
 
         result.Success.Should().BeFalse();
         result.ErrorReason.Should().Contain("denied");
@@ -415,7 +415,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}")
             .Returns((true, request));
 
-        var result = await sut.ReplayAsync(id);
+        var result = await sut.ReplayAsync(id, TestContext.Current.CancellationToken);
 
         result.Success.Should().BeFalse();
         result.ErrorReason.Should().Contain("awaiting");
@@ -435,7 +435,7 @@ public class HitlServiceTests
         _cacheProvider.RemoveAsync(Arg.Any<string>()).Returns(Task.CompletedTask);
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>()).Returns(Task.FromResult<HashSet<string>>(null!));
 
-        var result = await sut.ReplayAsync(id);
+        var result = await sut.ReplayAsync(id, TestContext.Current.CancellationToken);
 
         result.Success.Should().BeFalse();
         result.ErrorReason.Should().Contain("expired");
@@ -461,7 +461,7 @@ public class HitlServiceTests
         _cacheProvider.RemoveAsync(Arg.Any<string>()).Returns(Task.CompletedTask);
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>()).Returns(Task.FromResult<HashSet<string>>(null!));
 
-        var result = await sut.ReplayAsync(id);
+        var result = await sut.ReplayAsync(id, TestContext.Current.CancellationToken);
 
         result.Success.Should().BeTrue();
         result.StatusCode.Should().Be(200);
@@ -484,7 +484,7 @@ public class HitlServiceTests
         var handler = new FailingHttpMessageHandler();
         _httpClientFactory.CreateClient().Returns(new HttpClient(handler));
 
-        var result = await sut.ReplayAsync(id);
+        var result = await sut.ReplayAsync(id, TestContext.Current.CancellationToken);
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(503);
@@ -501,7 +501,7 @@ public class HitlServiceTests
         _cacheProvider.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}")
             .Returns((false, null));
 
-        var result = await sut.ReplayAsync(id);
+        var result = await sut.ReplayAsync(id, TestContext.Current.CancellationToken);
 
         result.Success.Should().BeFalse();
         result.ErrorReason.Should().Contain("no longer available");
@@ -514,7 +514,7 @@ public class HitlServiceTests
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<PendingHitlRequest>()).Returns(Task.FromResult<PendingHitlRequest>(null!));
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>()).Returns(Task.FromResult<HashSet<string>>(null!));
 
-        await sut.SuspendRequestAsync(BuildContext(), "audit test");
+        await sut.SuspendRequestAsync(BuildContext(), "audit test", TestContext.Current.CancellationToken);
 
         await _audit.Received(1).AddAsync(
             Arg.Is<AuditTrail>(a => a.Status == "PENDING_HITL"),
@@ -575,7 +575,7 @@ public class HitlServiceTests
         _cacheProvider.SetAsync(Arg.Any<string>(), Arg.Any<HashSet<string>>())
             .Returns(Task.FromResult<HashSet<string>>(null!));
 
-        var result = await sut.ReplayAsync(id);
+        var result = await sut.ReplayAsync(id, TestContext.Current.CancellationToken);
 
         result.Success.Should().BeTrue();
     }

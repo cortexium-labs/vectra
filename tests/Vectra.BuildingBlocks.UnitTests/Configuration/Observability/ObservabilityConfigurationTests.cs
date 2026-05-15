@@ -31,11 +31,11 @@ public class ObservabilityConfigurationTests
         var config = LoggingConfiguration.Create();
 
         config.DefaultLogLevel.Should().Be("Information");
-        config.File.LogLevel.Should().Be("Information");
-        config.File.LogPath.Should().Be("logs/log-.txt");
-        config.File.RollingInterval.Should().Be("Day");
-        config.File.RetainedFileCountLimit.Should().Be(7);
-        config.Seq.LogLevel.Should().Be("Information");
+        config.File?.LogLevel.Should().Be("Information");
+        config.File?.LogPath.Should().Be("logs/log-.txt");
+        config.File?.RollingInterval.Should().Be("Day");
+        config.File?.RetainedFileCountLimit.Should().Be(7);
+        config.Seq?.LogLevel.Should().Be("Information");
     }
 
     [Fact]

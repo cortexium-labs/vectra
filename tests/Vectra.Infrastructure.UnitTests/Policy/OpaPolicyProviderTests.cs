@@ -40,7 +40,7 @@ public class OpaPolicyProviderTests
         var factory = Substitute.For<IHttpClientFactory>();
         var config = new PolicyConfiguration
         {
-            Providers = new PolicyProviders { Opa = null }
+            Providers = new PolicyProviders { Opa = null! }
         };
         var sut = new OpaPolicyProvider(factory, Options.Create(config), NullLogger<OpaPolicyProvider>.Instance);
 

@@ -4,11 +4,11 @@ namespace Vectra.Domain.Agents;
 
 public class Agent: AuditableEntity<Guid>
 {
-    public string Name { get; private set; }
+    public string Name { get; private set; } = null!;
     public string? OwnerId { get; private set; }
     public AgentStatus Status { get; private set; }
     public string? PolicyName { get; set; }
-    public string ClientSecretHash { get; private set; }
+    public string ClientSecretHash { get; private set; } = null!;
     public double TrustScore { get; private set; }
     public ICollection<AgentHistory> AgentHistories { get; set; } = new List<AgentHistory>();
 

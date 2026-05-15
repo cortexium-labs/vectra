@@ -91,7 +91,7 @@ public class PolicyEvaluatorExtendedTests
     {
         // Exercises ConvertJsonElement → Object branch (returns Dictionary)
         var json = JsonSerializer.SerializeToElement(new { nested = new { x = 1 } });
-        var condition = new PolicyRuleCondition { Field = "input.data.nested", Operator = "eq", Value = null };
+        var condition = new PolicyRuleCondition { Field = "input.data.nested", Operator = "eq", Value = null! };
         var input = new Dictionary<string, object> { ["data"] = json };
 
         // nested is an object (dict), not null
@@ -164,7 +164,7 @@ public class PolicyEvaluatorExtendedTests
     [Fact]
     public void EvaluateCondition_DeserializeValue_NullValue_ReturnsFalseOnEq()
     {
-        var condition = new PolicyRuleCondition { Field = "input.method", Operator = "eq", Value = null };
+        var condition = new PolicyRuleCondition { Field = "input.method", Operator = "eq", Value = null! };
         var input = Input(("method", "GET"));
 
         PolicyEvaluator.EvaluateCondition(condition, input).Should().BeFalse();

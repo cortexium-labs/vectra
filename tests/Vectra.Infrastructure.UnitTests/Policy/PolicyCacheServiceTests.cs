@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Vectra.Application.Abstractions.Caches;
@@ -49,7 +48,7 @@ public class PolicyCacheServiceTests
         var policies = BuildPolicies(5);
         _policyLoader.LoadAllAsync(Arg.Any<CancellationToken>()).Returns(policies);
 
-        var (items, total) = await _sut.GetPagedAsync(1, 10);
+        var (items, total) = await _sut.GetPagedAsync(1, 10, TestContext.Current.CancellationToken);
 
         total.Should().Be(5);
         items.Should().HaveCount(5);
@@ -63,7 +62,7 @@ public class PolicyCacheServiceTests
         _cacheProvider.TryGetValueAsync<Dictionary<string, PolicyDefinition>>(Arg.Any<string>())
             .Returns((true, policies));
 
-        var (items, total) = await _sut.GetPagedAsync(1, 10);
+        var (items, total) = await _sut.GetPagedAsync(1, 10, TestContext.Current.CancellationToken);
 
         total.Should().Be(3);
         await _policyLoader.DidNotReceive().LoadAllAsync(Arg.Any<CancellationToken>());
@@ -75,7 +74,7 @@ public class PolicyCacheServiceTests
         var policies = BuildPolicies(10);
         _policyLoader.LoadAllAsync(Arg.Any<CancellationToken>()).Returns(policies);
 
-        var (items, total) = await _sut.GetPagedAsync(2, 3);
+        var (items, total) = await _sut.GetPagedAsync(2, 3, TestContext.Current.CancellationToken);
 
         total.Should().Be(10);
         items.Should().HaveCount(3);
@@ -87,7 +86,7 @@ public class PolicyCacheServiceTests
         var policies = BuildPolicies(7);
         _policyLoader.LoadAllAsync(Arg.Any<CancellationToken>()).Returns(policies);
 
-        var (items, total) = await _sut.GetPagedAsync(3, 3);
+        var (items, total) = await _sut.GetPagedAsync(3, 3, TestContext.Current.CancellationToken);
 
         total.Should().Be(7);
         items.Should().HaveCount(1); // 7 - 2*3 = 1
@@ -99,7 +98,7 @@ public class PolicyCacheServiceTests
         var policies = BuildPolicies(2);
         _policyLoader.LoadAllAsync(Arg.Any<CancellationToken>()).Returns(policies);
 
-        await _sut.GetPagedAsync(1, 10);
+        await _sut.GetPagedAsync(1, 10, TestContext.Current.CancellationToken);
 
         await _cacheProvider.Received(1)
             .SetAsync(Arg.Any<string>(), Arg.Any<Dictionary<string, PolicyDefinition>>());
@@ -111,7 +110,7 @@ public class PolicyCacheServiceTests
         _policyLoader.LoadAllAsync(Arg.Any<CancellationToken>())
             .Returns(new Dictionary<string, PolicyDefinition>());
 
-        var (items, total) = await _sut.GetPagedAsync(1, 10);
+        var (items, total) = await _sut.GetPagedAsync(1, 10, TestContext.Current.CancellationToken);
 
         total.Should().Be(0);
         items.Should().BeEmpty();

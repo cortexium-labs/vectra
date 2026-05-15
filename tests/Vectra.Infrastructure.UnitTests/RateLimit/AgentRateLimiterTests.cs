@@ -29,7 +29,7 @@ public class AgentRateLimiterTests
 
         for (int i = 0; i < 10; i++)
         {
-            var result = await sut.IsAllowedAsync(agentId);
+            var result = await sut.IsAllowedAsync(agentId, TestContext.Current.CancellationToken);
             result.Should().BeTrue();
         }
     }
@@ -42,7 +42,7 @@ public class AgentRateLimiterTests
 
         for (int i = 0; i < 5; i++)
         {
-            var result = await sut.IsAllowedAsync(agentId);
+            var result = await sut.IsAllowedAsync(agentId, TestContext.Current.CancellationToken);
             result.Should().BeTrue($"request {i + 1} should be allowed");
         }
     }
@@ -54,9 +54,9 @@ public class AgentRateLimiterTests
         var agentId = Guid.NewGuid();
 
         for (int i = 0; i < 3; i++)
-            await sut.IsAllowedAsync(agentId);
+            await sut.IsAllowedAsync(agentId, TestContext.Current.CancellationToken);
 
-        var result = await sut.IsAllowedAsync(agentId);
+        var result = await sut.IsAllowedAsync(agentId, TestContext.Current.CancellationToken);
 
         result.Should().BeFalse();
     }
@@ -68,13 +68,13 @@ public class AgentRateLimiterTests
         var agent1 = Guid.NewGuid();
         var agent2 = Guid.NewGuid();
 
-        await sut.IsAllowedAsync(agent1);
-        await sut.IsAllowedAsync(agent1);
+        await sut.IsAllowedAsync(agent1, TestContext.Current.CancellationToken);
+        await sut.IsAllowedAsync(agent1, TestContext.Current.CancellationToken);
         // agent1 is exhausted
-        (await sut.IsAllowedAsync(agent1)).Should().BeFalse();
+        (await sut.IsAllowedAsync(agent1, TestContext.Current.CancellationToken)).Should().BeFalse();
 
         // agent2 is independent
-        (await sut.IsAllowedAsync(agent2)).Should().BeTrue();
+        (await sut.IsAllowedAsync(agent2, TestContext.Current.CancellationToken)).Should().BeTrue();
     }
 
     [Fact]

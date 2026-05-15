@@ -53,7 +53,7 @@ public class FileSystemPolicyLoaderTests
         var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
         var policyFile = Path.Combine(tempDir, "test-policy.json");
-        await File.WriteAllTextAsync(policyFile, "{\"name\":\"test-policy\"}");
+        await File.WriteAllTextAsync(policyFile, "{\"name\":\"test-policy\"}", TestContext.Current.CancellationToken);
 
         var expectedPolicy = new PolicyDefinition { Name = "test-policy", Default = PolicyType.Allow };
         _deserializer.Deserialize<PolicyDefinition>(Arg.Any<string>()).Returns(expectedPolicy);
@@ -78,8 +78,8 @@ public class FileSystemPolicyLoaderTests
     {
         var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
-        await File.WriteAllTextAsync(Path.Combine(tempDir, "bad-policy.json"), "invalid json");
-        await File.WriteAllTextAsync(Path.Combine(tempDir, "good-policy.json"), "{\"name\":\"good-policy\"}");
+        await File.WriteAllTextAsync(Path.Combine(tempDir, "bad-policy.json"), "invalid json", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(tempDir, "good-policy.json"), "{\"name\":\"good-policy\"}", TestContext.Current.CancellationToken);
 
         var goodPolicy = new PolicyDefinition { Name = "good-policy", Default = PolicyType.Allow };
         _deserializer.Deserialize<PolicyDefinition>(Arg.Is<string>(s => s.Contains("invalid")))
@@ -106,7 +106,7 @@ public class FileSystemPolicyLoaderTests
     {
         var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
-        await File.WriteAllTextAsync(Path.Combine(tempDir, "unnamed.json"), "{\"name\":\"\"}");
+        await File.WriteAllTextAsync(Path.Combine(tempDir, "unnamed.json"), "{\"name\":\"\"}", TestContext.Current.CancellationToken);
 
         var namelessPolicy = new PolicyDefinition { Name = string.Empty };
         _deserializer.Deserialize<PolicyDefinition>(Arg.Any<string>()).Returns(namelessPolicy);
@@ -130,7 +130,7 @@ public class FileSystemPolicyLoaderTests
     {
         var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
-        await File.WriteAllTextAsync(Path.Combine(tempDir, "my-policy.json"), "{\"name\":\"my-policy\"}");
+        await File.WriteAllTextAsync(Path.Combine(tempDir, "my-policy.json"), "{\"name\":\"my-policy\"}", TestContext.Current.CancellationToken);
 
         var policy = new PolicyDefinition { Name = "my-policy", Default = PolicyType.Allow };
         _deserializer.Deserialize<PolicyDefinition>(Arg.Any<string>()).Returns(policy);

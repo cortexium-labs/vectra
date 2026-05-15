@@ -19,7 +19,7 @@ public static class JsonToIntentText
         return sb.ToString().Trim();
     }
 
-    private static void ProcessElement(JsonElement element, StringBuilder sb, string prefix)
+    private static void ProcessElement(JsonElement element, StringBuilder sb, string? prefix)
     {
         switch (element.ValueKind)
         {
@@ -72,12 +72,14 @@ public static class JsonToIntentText
         }
     }
 
-    private static string ExtractSimpleValue(JsonElement element)
+    private static string? ExtractSimpleValue(JsonElement? element)
     {
-        return element.ValueKind switch
+        if (element == null) return null;
+
+        return element.Value.ValueKind switch
         {
-            JsonValueKind.String => NormalizeValue(element.GetString()),
-            JsonValueKind.Number => element.ToString(),
+            JsonValueKind.String => NormalizeValue(element.Value.GetString()),
+            JsonValueKind.Number => element.Value.ToString(),
             JsonValueKind.True => "true",
             JsonValueKind.False => "false",
             _ => null
@@ -97,7 +99,7 @@ public static class JsonToIntentText
         return key.ToLowerInvariant();
     }
 
-    private static string NormalizeValue(string value)
+    private static string? NormalizeValue(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return value;
 

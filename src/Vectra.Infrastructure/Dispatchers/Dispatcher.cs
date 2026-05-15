@@ -64,6 +64,9 @@ public class Dispatcher : IDispatcher
                 var handlerType = typeof(IActionHandler<,>).MakeGenericType(type, typeof(TAction));
                 var handleMethod = handlerType.GetMethod("Handle");
 
+                if (handleMethod == null)
+                    throw new InvalidOperationException($"Handler method not found for type {handlerType.FullName}");
+
                 // Build expression: (request, sp, ct) => sp.GetService<THandler>().Handle(request, ct)
                 var requestParam = Expression.Parameter(typeof(IAction<TAction>), "request");
                 var serviceProviderParam = Expression.Parameter(typeof(IServiceProvider), "sp");

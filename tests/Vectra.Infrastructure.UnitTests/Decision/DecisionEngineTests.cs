@@ -75,7 +75,7 @@ public class DecisionEngineTests
             .Returns(PolicyDecision.Deny("blocked by policy"));
         var context = BuildContext();
 
-        var result = await sut.EvaluateAsync(context);
+        var result = await sut.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         result.IsDenied.Should().BeTrue();
         result.Reason.Should().NotBeNullOrEmpty();
@@ -89,7 +89,7 @@ public class DecisionEngineTests
             .Returns(PolicyDecision.Hitl("review required"));
         var context = BuildContext();
 
-        var result = await sut.EvaluateAsync(context);
+        var result = await sut.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         result.IsHitl.Should().BeTrue();
     }
@@ -102,7 +102,7 @@ public class DecisionEngineTests
             .Returns(0.1);
         var context = BuildContext();
 
-        var result = await sut.EvaluateAsync(context);
+        var result = await sut.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         await _policyProvider.DidNotReceive()
             .EvaluateAsync(Arg.Any<string>(), Arg.Any<Dictionary<string, object>>(), Arg.Any<CancellationToken>());
@@ -119,7 +119,7 @@ public class DecisionEngineTests
             .Returns(0.9); // above threshold
         var context = BuildContext();
 
-        var result = await sut.EvaluateAsync(context);
+        var result = await sut.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         result.IsHitl.Should().BeTrue();
         result.Reason.Should().Contain("risk score");
@@ -132,7 +132,7 @@ public class DecisionEngineTests
         SetupAllow();
         var context = BuildContext();
 
-        var result = await sut.EvaluateAsync(context);
+        var result = await sut.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         result.IsAllowed.Should().BeTrue();
     }
@@ -148,7 +148,7 @@ public class DecisionEngineTests
         _semanticProvider.AnalyzeAsync(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(new SemanticAnalysisResult { Confidence = 0.4 }); // below threshold
 
-        var result = await sut.EvaluateAsync(BuildContext());
+        var result = await sut.EvaluateAsync(BuildContext(), TestContext.Current.CancellationToken);
 
         result.IsHitl.Should().BeTrue();
         result.Reason.Should().Contain("semantic confidence");
@@ -161,7 +161,7 @@ public class DecisionEngineTests
         SetupAllow();
         var context = BuildContext();
 
-        var result = await sut.EvaluateAsync(context);
+        var result = await sut.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         await _semanticProvider.DidNotReceive()
             .AnalyzeAsync(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
@@ -178,7 +178,7 @@ public class DecisionEngineTests
         _semanticProvider.AnalyzeAsync(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(new SemanticAnalysisResult { Confidence = 0.3 }); // below threshold, but allowed
 
-        var result = await sut.EvaluateAsync(BuildContext());
+        var result = await sut.EvaluateAsync(BuildContext(), TestContext.Current.CancellationToken);
 
         result.IsAllowed.Should().BeTrue();
     }
@@ -190,7 +190,7 @@ public class DecisionEngineTests
         SetupAllow();
         var context = BuildContext();
 
-        await sut.EvaluateAsync(context);
+        await sut.EvaluateAsync(context, TestContext.Current.CancellationToken);
 
         await _audit.Received(1).AddAsync(Arg.Any<AuditTrail>(), Arg.Any<CancellationToken>());
     }
@@ -296,7 +296,7 @@ public class DecisionEngineTests
             Arg.Any<Guid>(), Arg.Any<bool>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromException(new InvalidOperationException("DB error")));
 
-        var result = await sut.EvaluateAsync(BuildContext());
+        var result = await sut.EvaluateAsync(BuildContext(), TestContext.Current.CancellationToken);
 
         result.IsAllowed.Should().BeTrue("history failure should be swallowed");
     }
@@ -312,7 +312,7 @@ public class DecisionEngineTests
         _semanticProvider.AnalyzeAsync(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(new SemanticAnalysisResult { Confidence = 0.95 }); // above threshold
 
-        var result = await sut.EvaluateAsync(BuildContext());
+        var result = await sut.EvaluateAsync(BuildContext(), TestContext.Current.CancellationToken);
 
         result.IsAllowed.Should().BeTrue();
     }
@@ -325,7 +325,7 @@ public class DecisionEngineTests
         _history.RecordRequestAsync(Arg.Any<Guid>(), Arg.Any<bool>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        await sut.EvaluateAsync(BuildContext());
+        await sut.EvaluateAsync(BuildContext(), TestContext.Current.CancellationToken);
 
         await _history.Received(1).RecordRequestAsync(
             Arg.Any<Guid>(),
@@ -343,7 +343,7 @@ public class DecisionEngineTests
         _history.RecordRequestAsync(Arg.Any<Guid>(), Arg.Any<bool>(), Arg.Any<double>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        await sut.EvaluateAsync(BuildContext());
+        await sut.EvaluateAsync(BuildContext(), TestContext.Current.CancellationToken);
 
         await _history.Received(1).RecordRequestAsync(
             Arg.Any<Guid>(),

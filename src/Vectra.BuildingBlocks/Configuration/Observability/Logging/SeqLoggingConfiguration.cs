@@ -3,7 +3,7 @@
 public sealed record SeqLoggingConfiguration
 {
     public bool Enabled { get; set; } = false;
-    public string LogLevel { get; init; }
+    public string LogLevel { get; init; } = null!;
     public string? ApiKey { get; init; }
     public string? Url { get; init; }
 

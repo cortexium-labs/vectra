@@ -51,7 +51,7 @@ public class DispatcherTests
     {
         var sut = BuildDispatcher(s => s.AddScoped<IActionHandler<TestQuery, string>, TestQueryHandler>());
 
-        var result = await sut.Dispatch(new TestQuery("hello"));
+        var result = await sut.Dispatch(new TestQuery("hello"), TestContext.Current.CancellationToken);
 
         result.Should().Be("result:hello");
     }
@@ -61,7 +61,7 @@ public class DispatcherTests
     {
         var sut = BuildDispatcher(s => s.AddScoped<IActionHandler<TestIntQuery, int>, TestIntHandler>());
 
-        var result = await sut.Dispatch(new TestIntQuery(5));
+        var result = await sut.Dispatch(new TestIntQuery(5), TestContext.Current.CancellationToken);
 
         result.Should().Be(10);
     }
@@ -92,8 +92,8 @@ public class DispatcherTests
         var sut = BuildDispatcher(s => s.AddScoped<IActionHandler<TestQuery, string>, TestQueryHandler>());
 
         // First call builds delegate, second call reuses cached one
-        var result1 = await sut.Dispatch(new TestQuery("first"));
-        var result2 = await sut.Dispatch(new TestQuery("second"));
+        var result1 = await sut.Dispatch(new TestQuery("first"), TestContext.Current.CancellationToken);
+        var result2 = await sut.Dispatch(new TestQuery("second"), TestContext.Current.CancellationToken);
 
         result1.Should().Be("result:first");
         result2.Should().Be("result:second");
@@ -117,7 +117,7 @@ public class DispatcherTests
             s.AddScoped<IValidator<ValidatedQuery>, ValidatedQueryValidator>();
         });
 
-        var result = await sut.Dispatch(new ValidatedQuery("ok-value"));
+        var result = await sut.Dispatch(new ValidatedQuery("ok-value"), TestContext.Current.CancellationToken);
 
         result.Should().Be("validated:ok-value");
     }

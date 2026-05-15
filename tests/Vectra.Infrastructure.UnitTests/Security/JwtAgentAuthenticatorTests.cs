@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using Vectra.Application.Abstractions.Executions;
-using Vectra.Application.Abstractions.Security;
 using Vectra.Domain.Agents;
 using Vectra.Infrastructure.Security;
 using Microsoft.Extensions.Options;
@@ -78,7 +77,7 @@ public class JwtAgentAuthenticatorTests
         tokenService.ValidateToken(Arg.Any<string>()).Returns(expectedPrincipal);
         var sut = CreateSut(AgentAuthProviderType.SelfSigned, tokenService);
 
-        var result = await sut.ValidateAsync("some-token");
+        var result = await sut.ValidateAsync("some-token", TestContext.Current.CancellationToken);
 
         result.Should().Be(expectedPrincipal);
         tokenService.Received(1).ValidateToken("some-token");
@@ -91,7 +90,7 @@ public class JwtAgentAuthenticatorTests
         tokenService.ValidateToken(Arg.Any<string>()).Returns((System.Security.Claims.ClaimsPrincipal?)null);
         var sut = CreateSut(AgentAuthProviderType.SelfSigned, tokenService);
 
-        var result = await sut.ValidateAsync("bad-token");
+        var result = await sut.ValidateAsync("bad-token", TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
     }
@@ -130,7 +129,7 @@ public class JwtAgentAuthenticatorTests
             metadataUrl: "http://localhost:9999/.well-known/oidc-that-doesnt-exist");
 
         // The OIDC metadata fetch will fail → catch block returns null
-        var result = await sut.ValidateAsync("invalid.jwt.token");
+        var result = await sut.ValidateAsync("invalid.jwt.token", TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
     }
@@ -145,7 +144,7 @@ public class JwtAgentAuthenticatorTests
             metadataUrl: "http://localhost:8080/.well-known/openid-configuration");
 
         // Will fail to fetch, but should not throw
-        var result = await sut.ValidateAsync("some.jwt.token");
+        var result = await sut.ValidateAsync("some.jwt.token", TestContext.Current.CancellationToken);
 
         result.Should().BeNull();
     }

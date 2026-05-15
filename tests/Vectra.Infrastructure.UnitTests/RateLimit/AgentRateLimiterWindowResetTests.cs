@@ -25,9 +25,9 @@ public class AgentRateLimiterWindowResetTests
         var agentId = Guid.NewGuid();
 
         // Exhaust the window
-        await sut.IsAllowedAsync(agentId);
-        await sut.IsAllowedAsync(agentId);
-        (await sut.IsAllowedAsync(agentId)).Should().BeFalse("limit exhausted");
+        await sut.IsAllowedAsync(agentId, TestContext.Current.CancellationToken);
+        await sut.IsAllowedAsync(agentId, TestContext.Current.CancellationToken);
+        (await sut.IsAllowedAsync(agentId, TestContext.Current.CancellationToken)).Should().BeFalse("limit exhausted");
 
         // Use reflection to back-date the window start so the window has expired
         var windowsField = typeof(AgentRateLimiter)
@@ -44,7 +44,7 @@ public class AgentRateLimiterWindowResetTests
         windowStartField.SetValue(window, DateTime.UtcNow.AddMinutes(-2).Ticks);
 
         // Now first call in new window should be allowed
-        var result = await sut.IsAllowedAsync(agentId);
+        var result = await sut.IsAllowedAsync(agentId, TestContext.Current.CancellationToken);
 
         result.Should().BeTrue("window has reset");
     }

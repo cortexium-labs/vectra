@@ -39,7 +39,7 @@ public class RiskScoringServiceTests
         var context = new RequestContext { AgentId = agentId, Method = "GET", Path = "/api/data" };
         _cacheProvider.TryGetValueAsync<double>(Arg.Any<string>()).Returns((true, 0.99));
 
-        var result = await _sut.ComputeRiskScoreAsync(context);
+        var result = await _sut.ComputeRiskScoreAsync(context, TestContext.Current.CancellationToken);
 
         result.Should().Be(0.99);
         await _historyRepo.DidNotReceive().GetRecentAsync(Arg.Any<Guid>(), Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>());
@@ -54,7 +54,7 @@ public class RiskScoringServiceTests
         _historyRepo.GetRecentAsync(agentId, Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
             .Returns((AgentHistory?)null);
 
-        var result = await _sut.ComputeRiskScoreAsync(context);
+        var result = await _sut.ComputeRiskScoreAsync(context, TestContext.Current.CancellationToken);
 
         result.Should().BeApproximately(0.4, 1e-9);
         await _cacheProvider.Received(1).SetAsync(Arg.Any<string>(), Arg.Any<double>());
