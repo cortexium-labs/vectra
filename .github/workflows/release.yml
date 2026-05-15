@@ -62,7 +62,7 @@ jobs:
     secrets: inherit
 
   docker-manifest:
-    needs: [sanitize_inputs, docker-linux, docker-windows]
+    needs: [sanitize_inputs, docker-linux]
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/_docker-manifest.yml
     with:
