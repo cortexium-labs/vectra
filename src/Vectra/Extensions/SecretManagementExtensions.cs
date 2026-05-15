@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using Vectra.Infrastructure;
 using Vectra.Infrastructure.SecretManagement;
 
 namespace Vectra.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class SecretManagementExtensions
 {
     public static WebApplicationBuilder AddVectraSecretManagement(this WebApplicationBuilder builder)

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Vectra.Extensions;
 using Vectra.Infrastructure;
@@ -7,6 +8,7 @@ using Vectra.Application;
 
 namespace Vectra.Configuration;
 
+[ExcludeFromCodeCoverage]
 internal static class StartupConfiguration
 {
     public static void ConfigureServices(WebApplicationBuilder builder)

@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Options;
 using Serilog;
+using System.Diagnostics.CodeAnalysis;
 using Vectra.BuildingBlocks.Configuration.System;
 using Vectra.BuildingBlocks.Configuration.System.Server;
 
 namespace Vectra.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class WebApplicationBuilderExtensions
 {
     private const int DefaultHttpPort = 7080;

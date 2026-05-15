@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
+using System.Diagnostics.CodeAnalysis;
 using Vectra.Application.Abstractions.Serializations;
 using Vectra.BuildingBlocks.Configuration.System;
 using Vectra.HealthCheck;
@@ -24,6 +25,7 @@ public static class ApplicationBuilderExtensions
         return app;
     }
 
+    [ExcludeFromCodeCoverage]
     public static IApplicationBuilder UseVectraHealthCheck(this IApplicationBuilder app)
     {
         app.UseEndpoints(endpoints =>
@@ -55,6 +57,7 @@ public static class ApplicationBuilderExtensions
         return app;
     }
 
+    [ExcludeFromCodeCoverage]
     public static IApplicationBuilder UseVectraApiDocumentation(this IApplicationBuilder app)
     {
         using var serviceScope = app.ApplicationServices.CreateScope();
