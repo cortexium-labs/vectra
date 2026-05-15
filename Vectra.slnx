@@ -30,4 +30,7 @@
     <File Path="tests/Load/README.md" />
     <File Path="tests/Load/vectra_load_test_without_policy.js" />
   </Folder>
+  <Folder Name="/tests/Presentation/">
+    <Project Path="tests/Vectra.UnitTests/Vectra.UnitTests.csproj" Id="a936de9b-7a79-4984-ae05-fbf02d87bfa0" />
+  </Folder>
 </Solution>
