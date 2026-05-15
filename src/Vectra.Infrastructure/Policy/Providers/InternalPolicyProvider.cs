@@ -25,7 +25,7 @@ public class InternalPolicyProvider : IPolicyProvider
     }
 
     public async Task<PolicyDecision> EvaluateAsync(
-        string policyName, 
+        string? policyName, 
         Dictionary<string, object> input, 
         CancellationToken cancellationToken)
     {
