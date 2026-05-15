@@ -45,7 +45,7 @@ jobs:
           IMAGE=${REGISTRY}/${IMAGE_NAME}
           docker build \
             --platform linux/amd64 \
-            --file .docker/Dockerfile.linux \
+            --file .docker/Dockerfile \
             --build-arg APP_VERSION="${RELEASE_VERSION}" \
             --tag ${IMAGE}:${RELEASE_VERSION}-linux-amd64 \
             .
@@ -62,7 +62,7 @@ jobs:
           IMAGE=${REGISTRY}/${IMAGE_NAME}
           docker build \
             --platform linux/arm64 \
-            --file .docker/Dockerfile.linux \
+            --file .docker/Dockerfile \
             --build-arg APP_VERSION="${RELEASE_VERSION}" \
             --tag ${IMAGE}:${RELEASE_VERSION}-linux-arm64 \
             .

@@ -61,16 +61,6 @@ jobs:
       image_name: ${{ github.repository }}
     secrets: inherit
 
-  docker-windows:
-    needs: [sanitize_inputs, release]
-    if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/_docker-windows.yml
-    with:
-      release_version: ${{ needs.sanitize_inputs.outputs.RELEASE_VERSION }}
-      registry: ghcr.io
-      image_name: ${{ github.repository }}
-    secrets: inherit
-
   docker-manifest:
     needs: [sanitize_inputs, docker-linux, docker-windows]
     if: github.ref == 'refs/heads/main'
