@@ -27,9 +27,16 @@ public class ProxyMiddlewareTests
     }
 
     [Fact]
+    public void Constructor_NullNext_Throws()
+    {
+        var act = () => new ProxyMiddleware(null!, _httpClientFactory);
+        act.Should().Throw<ArgumentNullException>().WithParameterName("next");
+    }
+
+    [Fact]
     public void Constructor_NullHttpClientFactory_Throws()
     {
-        var act = () => new ProxyMiddleware(null!);
+        var act = () => new ProxyMiddleware(_ => Task.CompletedTask, null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("httpClientFactory");
     }
 
@@ -347,7 +354,7 @@ public class ProxyMiddlewareTests
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private ProxyMiddleware BuildMiddleware(RequestDelegate next)
-        => new(_httpClientFactory);
+        => new(next, _httpClientFactory);
 
     private static DefaultHttpContext BuildContext(
         string path,

@@ -6,17 +6,17 @@ using Vectra.Application.Abstractions.RateLimit;
 using Vectra.Application.Models;
 using Vectra.Domain.Agents;
 using Vectra.Infrastructure.Decision;
-using Yarp.ReverseProxy.Forwarder;
 
 namespace Vectra.Middleware;
 
 public class ProxyMiddleware
 {
+    private readonly RequestDelegate _next;
     private readonly IHttpClientFactory _httpClientFactory;
 
-    public ProxyMiddleware(
-        IHttpClientFactory httpClientFactory)
+    public ProxyMiddleware(RequestDelegate next, IHttpClientFactory httpClientFactory)
     {
+        _next = next ?? throw new ArgumentNullException(nameof(next));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     }
 
