@@ -1,11 +1,12 @@
-﻿using System.Net.Http.Json;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net.Http.Json;
 using Vectra.Application.Abstractions.Executions;
 using Vectra.Application.Abstractions.Persistence;
 using Vectra.Application.Models;
 using Vectra.BuildingBlocks.Clock;
 using Vectra.BuildingBlocks.Configuration.HumanInTheLoop;
+using Vectra.Domain.Agents;
 using Vectra.Domain.AuditTrails;
 using Vectra.Infrastructure.Caches;
 
@@ -41,7 +42,10 @@ public class HitlService : IHitlService
         _logger = logger;
     }
 
-    public async Task<string> SuspendRequestAsync(RequestContext context, string reason, CancellationToken cancellationToken = default)
+    public async Task<string> SuspendRequestAsync(
+        RequestContext context, 
+        string reason, 
+        CancellationToken cancellationToken = default)
     {
         if (_config.MaxPendingRequests > 0)
         {
@@ -85,7 +89,9 @@ public class HitlService : IHitlService
         return id;
     }
 
-    public async Task<PendingHitlRequest?> GetPendingAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<PendingHitlRequest?> GetPendingAsync(
+        string id, 
+        CancellationToken cancellationToken = default)
     {
         var (found, value) = await _cache.Current.TryGetValueAsync<PendingHitlRequest>($"hitl:{id}");
         if (!found || value is null)
@@ -101,7 +107,9 @@ public class HitlService : IHitlService
         return value;
     }
 
-    public async Task<HitlRequestStatus> GetStatusAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<HitlRequestStatus> GetStatusAsync(
+        string id, 
+        CancellationToken cancellationToken = default)
     {
         var (approvedFound, _) = await _cache.Current.TryGetValueAsync<HitlDecision>($"hitl:decision:{id}");
         if (approvedFound)
@@ -123,7 +131,27 @@ public class HitlService : IHitlService
         return HitlRequestStatus.Pending;
     }
 
-    public async Task<IReadOnlyList<PendingHitlRequest>> GetAllPendingAsync(CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<PendingHitlRequest> Items, int TotalCount)> GetAllPendingPagedAsync(
+        int page, 
+        int pageSize, 
+        CancellationToken cancellationToken = default)
+    {
+        var index = await GetPendingIndexAsync();
+        var totalCount = index.Count;
+
+        var items = new List<PendingHitlRequest>();
+        foreach (var id in index.Skip((page - 1) * pageSize).Take(pageSize))
+        {
+            var item = await GetPendingAsync(id, cancellationToken);
+            if (item is not null)
+                items.Add(item);
+        }
+
+        return (items, totalCount);
+    }
+
+    public async Task<IReadOnlyList<PendingHitlRequest>> GetAllPendingAsync(
+        CancellationToken cancellationToken = default)
     {
         var index = await GetPendingIndexAsync();
         var results = new List<PendingHitlRequest>();
@@ -138,22 +166,34 @@ public class HitlService : IHitlService
         return results.AsReadOnly();
     }
 
-    public async Task ApproveAsync(string id, string reviewerId, string? comment, CancellationToken cancellationToken = default)
+    public async Task ApproveAsync(
+        string id, 
+        string reviewerId, 
+        string? comment, 
+        CancellationToken cancellationToken = default)
     {
         await RecordDecisionAsync(id, HitlRequestStatus.Approved, reviewerId, comment, cancellationToken);
         _logger.LogInformation("HITL request {HitlId} approved by reviewer {ReviewerId}", id, reviewerId);
     }
 
-    public async Task DenyAsync(string id, string reviewerId, string? comment, CancellationToken cancellationToken = default)
+    public async Task DenyAsync(
+        string id, 
+        string reviewerId, 
+        string? comment, 
+        CancellationToken cancellationToken = default)
     {
         await RecordDecisionAsync(id, HitlRequestStatus.Denied, reviewerId, comment, cancellationToken);
         _logger.LogInformation("HITL request {HitlId} denied by reviewer {ReviewerId}", id, reviewerId);
     }
 
-    public async Task RemoveAsync(string id, CancellationToken cancellationToken = default)
+    public async Task RemoveAsync(
+        string id, 
+        CancellationToken cancellationToken = default)
         => await CleanupAsync(id);
 
-    public async Task<HitlReplayResult> ReplayAsync(string id, CancellationToken cancellationToken = default)
+    public async Task<HitlReplayResult> ReplayAsync(
+        string id, 
+        CancellationToken cancellationToken = default)
     {
         // 1. Verify the decision is Approved
         var status = await GetStatusAsync(id, cancellationToken);
@@ -293,7 +333,9 @@ public class HitlService : IHitlService
         return found && index is not null ? index : new HashSet<string>();
     }
 
-    private async Task SendWebhookNotificationAsync(PendingHitlRequest pending, CancellationToken cancellationToken)
+    private async Task SendWebhookNotificationAsync(
+        PendingHitlRequest pending, 
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_config.NotificationWebhookUrl))
             return;

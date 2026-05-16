@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using Vectra.Application.Abstractions.Executions;
+using Vectra.Application.Abstractions.Dispatchers;
+using Vectra.Application.Features.Hitl.Approve;
+using Vectra.BuildingBlocks.Results;
 using Vectra.Endpoints;
 
 namespace Vectra.UnitTests.Endpoints;
@@ -30,22 +32,18 @@ public class HitlsUpstreamStreamResultTests
         // Arrange: build the IResult via ApproveHitl success path
         var body = System.Text.Encoding.UTF8.GetBytes("response content");
         var stream = new MemoryStream(body);
-        var replay = new HitlReplayResult(true, 201, null, null, stream);
 
-        var hitlService = NSubstitute.Substitute.For<Vectra.Application.Abstractions.Executions.IHitlService>();
-        hitlService.GetStatusAsync("id1", Arg.Any<CancellationToken>())
-                   .Returns(HitlRequestStatus.Pending);
-        hitlService.ApproveAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-                   .Returns(Task.CompletedTask);
-        hitlService.ReplayAsync("id1", Arg.Any<CancellationToken>())
-                   .Returns(replay);
+        var dispatcher = Substitute.For<IDispatcher>();
+        dispatcher.Dispatch(Arg.Any<ApproveRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Result<ApproveResult>.Success(
+                new ApproveResult(201, "application/octet-stream", stream)));
 
         var requestContext = new DefaultHttpContext();
         var result = await Hitls.ApproveHitl(
             "id1",
             new Hitls.ReviewDecisionRequest(null),
             requestContext,
-            hitlService,
+            dispatcher,
             CancellationToken.None);
 
         // Act
@@ -64,18 +62,15 @@ public class HitlsUpstreamStreamResultTests
     {
         var body = System.Text.Encoding.UTF8.GetBytes("data");
         var stream = new MemoryStream(body);
-        // No content-type header set by the fake upstream → replay returns null headers
-        var replay = new HitlReplayResult(true, 200, null, null, stream);
 
-        var hitlService = NSubstitute.Substitute.For<Vectra.Application.Abstractions.Executions.IHitlService>();
-        hitlService.GetStatusAsync("x", Arg.Any<CancellationToken>()).Returns(HitlRequestStatus.Pending);
-        hitlService.ApproveAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-                   .Returns(Task.CompletedTask);
-        hitlService.ReplayAsync("x", Arg.Any<CancellationToken>()).Returns(replay);
+        var dispatcher = Substitute.For<IDispatcher>();
+        dispatcher.Dispatch(Arg.Any<ApproveRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Result<ApproveResult>.Success(
+                new ApproveResult(200, "application/octet-stream", stream)));
 
         var ctx = new DefaultHttpContext();
         var result = await Hitls.ApproveHitl(
-            "x", new Hitls.ReviewDecisionRequest(null), ctx, hitlService, CancellationToken.None);
+            "x", new Hitls.ReviewDecisionRequest(null), ctx, dispatcher, CancellationToken.None);
 
         var executeCtx = BuildContext();
         await result.ExecuteAsync(executeCtx);
@@ -83,3 +78,4 @@ public class HitlsUpstreamStreamResultTests
         executeCtx.Response.StatusCode.Should().Be(200);
     }
 }
+

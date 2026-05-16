@@ -1,4 +1,7 @@
-﻿using Vectra.Application.Abstractions.Executions;
+﻿using Microsoft.AspNetCore.Mvc;
+using Vectra.Application.Abstractions.Dispatchers;
+using Vectra.Application.Abstractions.Executions;
+using Vectra.Application.Extensions;
 using Vectra.Extensions;
 
 namespace Vectra.Endpoints;
@@ -34,71 +37,55 @@ public class Hitls : EndpointGroupBase
     }
 
     public static async Task<IResult> GetAllPending(
-        IHitlService hitlService,
-        CancellationToken cancellationToken)
+        [FromServices] IDispatcher dispatcher,
+        CancellationToken cancellationToken,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25)
     {
-        var pending = await hitlService.GetAllPendingAsync(cancellationToken);
-        return Results.Ok(pending);
+        var result = await dispatcher.GetAllPendingHitl(page, pageSize, cancellationToken);
+        return result.ToHttpResult();
     }
 
     public static async Task<IResult> GetStatus(
         string id,
-        IHitlService hitlService,
+        [FromServices] IDispatcher dispatcher,
         CancellationToken cancellationToken)
     {
-        var status = await hitlService.GetStatusAsync(id, cancellationToken);
+        var result = await dispatcher.GetHitlStatus(id, cancellationToken);
+        if (!result.IsSuccess)
+            return result.ToHttpResult();
 
-        if (status == HitlRequestStatus.NotFound)
-            return Results.NotFound();
-
-        PendingHitlRequest? pending = null;
-        if (status == HitlRequestStatus.Pending)
-            pending = await hitlService.GetPendingAsync(id, cancellationToken);
-
-        return Results.Ok(new HitlStatusResponse(id, status.ToString(), pending));
+        var value = result.Value!;
+        return Results.Ok(new HitlStatusResponse(value.Id, value.Status, value.Request));
     }
 
     public static async Task<IResult> ApproveHitl(
         string id,
-        ReviewDecisionRequest body,
+        [FromBody] ReviewDecisionRequest body,
         HttpContext httpContext,
-        IHitlService hitlService,
+        [FromServices] IDispatcher dispatcher,
         CancellationToken cancellationToken)
     {
-        var status = await hitlService.GetStatusAsync(id, cancellationToken);
-        if (status == HitlRequestStatus.NotFound || status == HitlRequestStatus.Expired)
-            return Results.NotFound();
-
         var reviewerId = httpContext.User.Identity?.Name ?? "unknown";
-        await hitlService.ApproveAsync(id, reviewerId, body.Comment, cancellationToken);
+        var result = await dispatcher.ApproveHitl(id, reviewerId, body.Comment, cancellationToken);
 
-        var result = await hitlService.ReplayAsync(id, cancellationToken);
+        if (!result.IsSuccess)
+            return result.ToHttpResult();
 
-        if (!result.Success)
-        {
-            if (result.StatusCode == 503)
-                return Results.Problem(result.ErrorReason, statusCode: StatusCodes.Status502BadGateway);
-            return Results.BadRequest(result.ErrorReason);
-        }
-
-        var contentType = result.ResponseHeaders?.GetValueOrDefault("Content-Type") ?? "application/octet-stream";
-        return new UpstreamStreamResult(result.ResponseBody!, contentType, result.StatusCode ?? 200);
+        var value = result.Value!;
+        return new UpstreamStreamResult(value.ResponseBody, value.ContentType, value.StatusCode);
     }
 
     public static async Task<IResult> DenyHitl(
         string id,
-        ReviewDecisionRequest body,
+        [FromBody] ReviewDecisionRequest body,
         HttpContext httpContext,
-        IHitlService hitlService,
+        [FromServices] IDispatcher dispatcher,
         CancellationToken cancellationToken)
     {
-        var status = await hitlService.GetStatusAsync(id, cancellationToken);
-        if (status == HitlRequestStatus.NotFound || status == HitlRequestStatus.Expired)
-            return Results.NotFound();
-
         var reviewerId = httpContext.User.Identity?.Name ?? "unknown";
-        await hitlService.DenyAsync(id, reviewerId, body.Comment, cancellationToken);
-        return Results.Ok();
+        var result = await dispatcher.DenyHitl(id, reviewerId, body.Comment, cancellationToken);
+        return result.ToHttpResult();
     }
 
     public record HitlStatusResponse(string Id, string Status, PendingHitlRequest? Request);

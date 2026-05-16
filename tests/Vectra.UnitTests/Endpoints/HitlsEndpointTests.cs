@@ -1,17 +1,25 @@
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
+using Vectra.Application.Abstractions.Dispatchers;
+using VoidType = Vectra.Application.Abstractions.Dispatchers.Void;
 using Vectra.Application.Abstractions.Executions;
+using Vectra.Application.Features.Hitl.Approve;
+using Vectra.Application.Features.Hitl.Deny;
+using Vectra.Application.Features.Hitl.GetAllPending;
+using Vectra.Application.Features.Hitl.GetStatus;
+using Vectra.BuildingBlocks.Errors;
+using Vectra.BuildingBlocks.Results;
 using Vectra.Endpoints;
 
 namespace Vectra.UnitTests.Endpoints;
 
 public class HitlsEndpointTests
 {
-    private readonly IHitlService _hitlService;
+    private readonly IDispatcher _dispatcher;
 
     public HitlsEndpointTests()
     {
-        _hitlService = Substitute.For<IHitlService>();
+        _dispatcher = Substitute.For<IDispatcher>();
     }
 
     // ── GetAllPending ─────────────────────────────────────────────────────
@@ -24,9 +32,10 @@ public class HitlsEndpointTests
             new("id1", "GET", "http://test", [], null, "reason", Guid.NewGuid(),
                 DateTime.UtcNow, DateTime.UtcNow.AddMinutes(5))
         };
-        _hitlService.GetAllPendingAsync(Arg.Any<CancellationToken>()).Returns(pending);
+        _dispatcher.Dispatch(Arg.Any<GetAllPendingRequest>(), Arg.Any<CancellationToken>())
+            .Returns(PaginatedResult<PendingHitlRequest>.SuccessAsync(pending, 1, 10, 1));
 
-        var result = await Hitls.GetAllPending(_hitlService, CancellationToken.None);
+        var result = await Hitls.GetAllPending(_dispatcher, CancellationToken.None);
 
         AssertStatusCode(result, 200);
     }
@@ -34,9 +43,11 @@ public class HitlsEndpointTests
     [Fact]
     public async Task GetAllPending_EmptyList_Returns200()
     {
-        _hitlService.GetAllPendingAsync(Arg.Any<CancellationToken>()).Returns(new List<PendingHitlRequest>());
+        _dispatcher.Dispatch(Arg.Any<GetAllPendingRequest>(), Arg.Any<CancellationToken>())
+            .Returns(PaginatedResult<PendingHitlRequest>.SuccessAsync(
+                (IReadOnlyList<PendingHitlRequest>)new List<PendingHitlRequest>(), 1, 10, 0));
 
-        var result = await Hitls.GetAllPending(_hitlService, CancellationToken.None);
+        var result = await Hitls.GetAllPending(_dispatcher, CancellationToken.None);
 
         AssertStatusCode(result, 200);
     }
@@ -46,9 +57,11 @@ public class HitlsEndpointTests
     [Fact]
     public async Task GetStatus_NotFound_Returns404()
     {
-        _hitlService.GetStatusAsync("missing", Arg.Any<CancellationToken>()).Returns(HitlRequestStatus.NotFound);
+        _dispatcher.Dispatch(Arg.Any<GetStatusRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Result<GetStatusResult>.FailureAsync(
+                Error.NotFound(new ErrorCode(0501004, ErrorCategory.Persistence), "not found")));
 
-        var result = await Hitls.GetStatus("missing", _hitlService, CancellationToken.None);
+        var result = await Hitls.GetStatus("missing", _dispatcher, CancellationToken.None);
 
         AssertStatusCode(result, 404);
     }
@@ -56,9 +69,11 @@ public class HitlsEndpointTests
     [Fact]
     public async Task GetStatus_Approved_Returns200WithStatus()
     {
-        _hitlService.GetStatusAsync("id1", Arg.Any<CancellationToken>()).Returns(HitlRequestStatus.Approved);
+        _dispatcher.Dispatch(Arg.Any<GetStatusRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Result<GetStatusResult>.SuccessAsync(
+                new GetStatusResult("id1", HitlRequestStatus.Approved.ToString(), null)));
 
-        var result = await Hitls.GetStatus("id1", _hitlService, CancellationToken.None);
+        var result = await Hitls.GetStatus("id1", _dispatcher, CancellationToken.None);
 
         AssertStatusCode(result, 200);
     }
@@ -68,13 +83,13 @@ public class HitlsEndpointTests
     {
         var pending = new PendingHitlRequest("id1", "GET", "http://x", [], null, "reason",
             Guid.NewGuid(), DateTime.UtcNow, DateTime.UtcNow.AddMinutes(5));
-        _hitlService.GetStatusAsync("id1", Arg.Any<CancellationToken>()).Returns(HitlRequestStatus.Pending);
-        _hitlService.GetPendingAsync("id1", Arg.Any<CancellationToken>()).Returns(pending);
+        _dispatcher.Dispatch(Arg.Any<GetStatusRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Result<GetStatusResult>.SuccessAsync(
+                new GetStatusResult("id1", HitlRequestStatus.Pending.ToString(), pending)));
 
-        var result = await Hitls.GetStatus("id1", _hitlService, CancellationToken.None);
+        var result = await Hitls.GetStatus("id1", _dispatcher, CancellationToken.None);
 
         AssertStatusCode(result, 200);
-        await _hitlService.Received(1).GetPendingAsync("id1", Arg.Any<CancellationToken>());
     }
 
     // ── ApproveHitl ───────────────────────────────────────────────────────
@@ -82,11 +97,13 @@ public class HitlsEndpointTests
     [Fact]
     public async Task ApproveHitl_NotFound_Returns404()
     {
-        _hitlService.GetStatusAsync("nope", Arg.Any<CancellationToken>()).Returns(HitlRequestStatus.NotFound);
+        _dispatcher.Dispatch(Arg.Any<ApproveRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Result<ApproveResult>.FailureAsync(
+                Error.NotFound(new ErrorCode(0501004, ErrorCategory.Persistence), "not found")));
 
         var body = new Hitls.ReviewDecisionRequest(null);
         var context = new DefaultHttpContext();
-        var result = await Hitls.ApproveHitl("nope", body, context, _hitlService, CancellationToken.None);
+        var result = await Hitls.ApproveHitl("nope", body, context, _dispatcher, CancellationToken.None);
 
         AssertStatusCode(result, 404);
     }
@@ -94,11 +111,13 @@ public class HitlsEndpointTests
     [Fact]
     public async Task ApproveHitl_Expired_Returns404()
     {
-        _hitlService.GetStatusAsync("old", Arg.Any<CancellationToken>()).Returns(HitlRequestStatus.Expired);
+        _dispatcher.Dispatch(Arg.Any<ApproveRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Result<ApproveResult>.FailureAsync(
+                Error.NotFound(new ErrorCode(0501004, ErrorCategory.Persistence), "expired")));
 
         var body = new Hitls.ReviewDecisionRequest("late");
         var context = new DefaultHttpContext();
-        var result = await Hitls.ApproveHitl("old", body, context, _hitlService, CancellationToken.None);
+        var result = await Hitls.ApproveHitl("old", body, context, _dispatcher, CancellationToken.None);
 
         AssertStatusCode(result, 404);
     }
@@ -107,17 +126,14 @@ public class HitlsEndpointTests
     public async Task ApproveHitl_Success_ReturnsStreamResult()
     {
         var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("ok"));
-        var replay = new HitlReplayResult(true, 200, null, null, stream);
-
-        _hitlService.GetStatusAsync("id1", Arg.Any<CancellationToken>()).Returns(HitlRequestStatus.Pending);
-        _hitlService.ApproveAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-                    .Returns(Task.CompletedTask);
-        _hitlService.ReplayAsync("id1", Arg.Any<CancellationToken>()).Returns(replay);
+        _dispatcher.Dispatch(Arg.Any<ApproveRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Result<ApproveResult>.SuccessAsync(
+                new ApproveResult(200, "application/json", stream)));
 
         var body = new Hitls.ReviewDecisionRequest("LGTM");
         var context = new DefaultHttpContext();
         context.Response.Body = new MemoryStream();
-        var result = await Hitls.ApproveHitl("id1", body, context, _hitlService, CancellationToken.None);
+        var result = await Hitls.ApproveHitl("id1", body, context, _dispatcher, CancellationToken.None);
 
         result.Should().NotBeNull();
     }
@@ -125,19 +141,16 @@ public class HitlsEndpointTests
     [Fact]
     public async Task ApproveHitl_ReplayFails503_Returns502()
     {
-        var replay = new HitlReplayResult(false, 503, "upstream down", null, null);
-
-        _hitlService.GetStatusAsync("id1", Arg.Any<CancellationToken>()).Returns(HitlRequestStatus.Pending);
-        _hitlService.ApproveAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-                    .Returns(Task.CompletedTask);
-        _hitlService.ReplayAsync("id1", Arg.Any<CancellationToken>()).Returns(replay);
+        _dispatcher.Dispatch(Arg.Any<ApproveRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Result<ApproveResult>.FailureAsync(
+                Error.Failure(VectraErrors.SystemFailure, "upstream down")));
 
         var body = new Hitls.ReviewDecisionRequest(null);
         var context = new DefaultHttpContext();
         context.Response.Body = new MemoryStream();
-        var result = await Hitls.ApproveHitl("id1", body, context, _hitlService, CancellationToken.None);
+        var result = await Hitls.ApproveHitl("id1", body, context, _dispatcher, CancellationToken.None);
 
-        AssertStatusCode(result, 502);
+        AssertStatusCode(result, 500);
     }
 
     // ── DenyHitl ─────────────────────────────────────────────────────────
@@ -145,11 +158,13 @@ public class HitlsEndpointTests
     [Fact]
     public async Task DenyHitl_NotFound_Returns404()
     {
-        _hitlService.GetStatusAsync("nope", Arg.Any<CancellationToken>()).Returns(HitlRequestStatus.NotFound);
+        _dispatcher.Dispatch(Arg.Any<DenyRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Result<VoidType>.FailureAsync(
+                Error.NotFound(new ErrorCode(0501004, ErrorCategory.Persistence), "not found")));
 
         var body = new Hitls.ReviewDecisionRequest(null);
         var context = new DefaultHttpContext();
-        var result = await Hitls.DenyHitl("nope", body, context, _hitlService, CancellationToken.None);
+        var result = await Hitls.DenyHitl("nope", body, context, _dispatcher, CancellationToken.None);
 
         AssertStatusCode(result, 404);
     }
@@ -157,14 +172,13 @@ public class HitlsEndpointTests
     [Fact]
     public async Task DenyHitl_Approved_Returns200()
     {
-        _hitlService.GetStatusAsync("id1", Arg.Any<CancellationToken>()).Returns(HitlRequestStatus.Approved);
-        _hitlService.DenyAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-                    .Returns(Task.CompletedTask);
+        _dispatcher.Dispatch(Arg.Any<DenyRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Result<VoidType>.SuccessAsync(new VoidType()));
 
         var body = new Hitls.ReviewDecisionRequest("denied");
         var context = new DefaultHttpContext();
         context.Response.Body = new MemoryStream();
-        var result = await Hitls.DenyHitl("id1", body, context, _hitlService, CancellationToken.None);
+        var result = await Hitls.DenyHitl("id1", body, context, _dispatcher, CancellationToken.None);
 
         AssertStatusCode(result, 200);
     }
@@ -174,3 +188,4 @@ public class HitlsEndpointTests
     private static void AssertStatusCode(IResult httpResult, int expected)
         => HttpTestHelpers.ExecuteAndGetStatusCode(httpResult).Should().Be(expected);
 }
+
