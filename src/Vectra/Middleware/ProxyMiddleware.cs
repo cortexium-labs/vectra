@@ -12,20 +12,11 @@ namespace Vectra.Middleware;
 
 public class ProxyMiddleware
 {
-    private readonly RequestDelegate _next;
-    private readonly IHttpForwarder _forwarder;
-    private readonly ILogger<ProxyMiddleware> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
 
     public ProxyMiddleware(
-        RequestDelegate next,
-        IHttpForwarder forwarder,
-        ILogger<ProxyMiddleware> logger,
         IHttpClientFactory httpClientFactory)
     {
-        _next = next ?? throw new ArgumentNullException(nameof(next));
-        _forwarder = forwarder ?? throw new ArgumentNullException(nameof(forwarder));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     }
 

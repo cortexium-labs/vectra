@@ -27,33 +27,9 @@ public class ProxyMiddlewareTests
     }
 
     [Fact]
-    public void Constructor_NullNext_Throws()
-    {
-        var act = () => new ProxyMiddleware(null!, Substitute.For<Yarp.ReverseProxy.Forwarder.IHttpForwarder>(),
-            _logger, _httpClientFactory);
-        act.Should().Throw<ArgumentNullException>().WithParameterName("next");
-    }
-
-    [Fact]
-    public void Constructor_NullForwarder_Throws()
-    {
-        var act = () => new ProxyMiddleware(_ => Task.CompletedTask, null!, _logger, _httpClientFactory);
-        act.Should().Throw<ArgumentNullException>().WithParameterName("forwarder");
-    }
-
-    [Fact]
-    public void Constructor_NullLogger_Throws()
-    {
-        var act = () => new ProxyMiddleware(_ => Task.CompletedTask,
-            Substitute.For<Yarp.ReverseProxy.Forwarder.IHttpForwarder>(), null!, _httpClientFactory);
-        act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
-    }
-
-    [Fact]
     public void Constructor_NullHttpClientFactory_Throws()
     {
-        var act = () => new ProxyMiddleware(_ => Task.CompletedTask,
-            Substitute.For<Yarp.ReverseProxy.Forwarder.IHttpForwarder>(), _logger, null!);
+        var act = () => new ProxyMiddleware(null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("httpClientFactory");
     }
 
@@ -371,10 +347,7 @@ public class ProxyMiddlewareTests
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private ProxyMiddleware BuildMiddleware(RequestDelegate next)
-        => new(next,
-               Substitute.For<Yarp.ReverseProxy.Forwarder.IHttpForwarder>(),
-               _logger,
-               _httpClientFactory);
+        => new(_httpClientFactory);
 
     private static DefaultHttpContext BuildContext(
         string path,
