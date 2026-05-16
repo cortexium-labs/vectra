@@ -7,13 +7,13 @@
 		<AssemblyName>vectra</AssemblyName>
 		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 		<Title>Vectra</Title>
+		<Description>Intent-Aware Governance Gateway</Description>
 		<Company>Cortexium Labs</Company>
 		<Copyright>© Cortexium Labs. All rights reserved.</Copyright>
 		<Authors>Cortexium Labs</Authors>
 		<RepositoryUrl>https://github.com/cortexiumlabs/vectra</RepositoryUrl>
-		<PackageProjectUrl>https://cortexiumlabs.com/vectra</PackageProjectUrl>
+		<PackageProjectUrl>https://cortexiumlabs.com/products/vectra</PackageProjectUrl>
 		<RepositoryType>git</RepositoryType>
-		<Description>Intent-Aware Governance Gateway</Description>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='Release'">
