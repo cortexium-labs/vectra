@@ -56,22 +56,22 @@ public sealed class InternalOnnxProvider : ISemanticProvider, IDisposable
     }
 
     public async Task<SemanticAnalysisResult> AnalyzeAsync(
-        string? requestBody,
+        string? body,
         string metadata,
         CancellationToken cancellationToken)
     {
         if (!_enabled)
             return new SemanticAnalysisResult { Intent = "unknown", Confidence = 0.5, FallbackSafe = true };
 
-        if (string.IsNullOrWhiteSpace(requestBody))
+        if (string.IsNullOrWhiteSpace(body))
             return new SemanticAnalysisResult { Intent = "unknown", Confidence = 0.5, FallbackSafe = true };
 
-        var cacheKey = $"semantic_internal:{ComputeHash(requestBody)}";
+        var cacheKey = $"semantic_internal:{ComputeHash(body)}";
         var (success, cached) = await _cacheProvider!.TryGetValueAsync<SemanticAnalysisResult>(cacheKey);
         if (success)
             return cached!;
 
-        var (inputIds, attentionMask) = _tokenizer!.Tokenize(requestBody, _maxLength);
+        var (inputIds, attentionMask) = _tokenizer!.Tokenize(body, _maxLength);
         var inputTensor = new DenseTensor<long>(inputIds, new[] { 1, _maxLength });
         var maskTensor  = new DenseTensor<long>(attentionMask, new[] { 1, _maxLength });
 
