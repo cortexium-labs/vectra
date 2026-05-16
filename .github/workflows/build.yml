@@ -10,6 +10,8 @@ jobs:
   sonarcloud:
     name: Build, Test & Analyze
     runs-on: windows-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
       - name: Checkout
@@ -23,11 +25,11 @@ jobs:
           dotnet-version: '10.x'
 
       - name: Install SonarScanner
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != '' }}
         run: dotnet tool install --global dotnet-sonarscanner
 
       - name: Begin SonarCloud Analysis
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != '' }}
         run: |
           dotnet sonarscanner begin `
             /k:"cortexiumlabs_vectra" `
@@ -48,5 +50,5 @@ jobs:
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: End SonarCloud Analysis
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: ${{ env.SONAR_TOKEN != '' }}
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
