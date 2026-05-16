@@ -24,7 +24,7 @@ internal class AssignPolicyHandler : IActionHandler<AssignPolicyRequest, Result<
         _policyLoader = policyLoader ?? throw new ArgumentNullException(nameof(policyLoader));
     }
 
-    public async Task<Result<Abstractions.Dispatchers.Void>> Handle(AssignPolicyRequest request, CancellationToken cancellationToken)
+    public async Task<Result<Abstractions.Dispatchers.Void>> Handle(AssignPolicyRequest request, CancellationToken cancellationToken = default)
     {
         var agentId = Guid.Parse(request.AgentId);
         var agent = await _agentRepository.GetByIdAsync(agentId, cancellationToken);
